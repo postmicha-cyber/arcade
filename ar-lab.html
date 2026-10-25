@@ -26,10 +26,10 @@
   #top > * { pointer-events: auto; }
   .seg { display: flex; background: rgba(8,12,28,.68); border: 1px solid rgba(255,255,255,.14); border-radius: 12px; padding: 3px;
     backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
-  .seg button { border: 0; background: transparent; color: var(--dim); font: 600 14px inherit; padding: 8px 12px; border-radius: 9px; }
+  .seg button { border: 0; background: transparent; color: var(--dim); font: 600 13px inherit; padding: 8px 9px; border-radius: 9px; }
   .seg button.on { background: rgba(0,240,255,.2); color: var(--c1); box-shadow: 0 0 12px rgba(0,240,255,.35) inset; }
   .sp { flex: 1; }
-  .ib { width: 42px; height: 42px; border-radius: 12px; border: 1px solid rgba(255,255,255,.14); background: rgba(8,12,28,.68);
+  .ib { width: 40px; height: 40px; flex: 0 0 auto; border-radius: 12px; border: 1px solid rgba(255,255,255,.14); background: rgba(8,12,28,.68);
     color: var(--txt); font-size: 18px; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
   .ib.on { border-color: var(--c1); box-shadow: 0 0 12px rgba(0,240,255,.4); }
 
@@ -75,6 +75,7 @@
     border: 0; border-radius: 16px; box-shadow: 0 0 28px rgba(0,240,255,.65); }
   .big:active { transform: scale(.97); }
   .fine { margin-top: 16px; font-size: 12px; color: var(--dim); max-width: 320px; line-height: 1.4; }
+  .backlink { margin-top: 18px; color: var(--dim); font-size: 14px; text-decoration: none; padding: 8px 14px; }
   #status { margin-top: 12px; min-height: 18px; font-size: 13px; color: var(--c3); }
   #over h1 { color: var(--red); text-shadow: 0 0 22px rgba(255,56,96,.7); font-size: 32px; }
   #over .stat { font-size: 20px; margin: 4px 0; }
@@ -92,11 +93,13 @@
 <div id="probe"></div>
 
 <div id="top">
+  <button class="ib" id="btnBack" aria-label="Zurück zum Menü">←</button>
   <div class="seg">
     <button data-mode="hunt" class="on">🎯 Jagd</button>
     <button data-mode="lab">🧪 Labor</button>
   </div>
   <div class="sp"></div>
+  <button class="ib" id="btnPick" aria-label="Hindernis wählen">🧱</button>
   <button class="ib" id="btnSens" aria-label="Sensoren anzeigen">📡</button>
   <button class="ib" id="btnSet" aria-label="Einstellungen">⚙️</button>
 </div>
@@ -110,14 +113,18 @@
   <div class="row"><label>Blickfeld der Kamera <b id="fovV"></b></label>
     <input type="range" id="fov" min="40" max="90" step="1">
     <small>Wenn Drohnen beim Drehen gegenüber dem Bild "wandern", hier nachjustieren, bis sie am echten Ort kleben.</small></div>
-  <div class="row"><label>Kanten-Empfindlichkeit <b id="sensV"></b></label>
-    <input type="range" id="sens2" min="3" max="20" step="1">
-    <small>Wie viel Prozent des Bildes als Hindernis zählen. Höher = mehr Hindernisse.</small></div>
-  <div class="row chk"><label>Erkannte Kanten anzeigen <input type="checkbox" id="edgesChk"></label></div>
+  <div class="row"><label>Auswahl-Toleranz <b id="tolV"></b></label>
+    <input type="range" id="tol" min="12" max="90" step="1">
+    <small>Wie ähnlich Farben sein dürfen, damit sie zum gewählten Objekt zählen. Gilt für die nächste Auswahl. Zu groß: das Objekt läuft in die Wand aus. Zu klein: es zerfällt in Flecken.</small></div>
+  <div class="row chk"><label>Hindernisse anzeigen <input type="checkbox" id="edgesChk"></label></div>
+  <div class="row chk"><label>Chaos-Modus: alle Kanten sind Hindernisse <input type="checkbox" id="chaosChk"></label></div>
+  <div class="row" id="sensRow" hidden><label>Chaos-Empfindlichkeit <b id="sensV"></b></label>
+    <input type="range" id="sens2" min="3" max="20" step="1"></div>
   <div class="btns">
+    <button class="btn" id="btnClear">Hindernisse löschen</button>
     <button class="btn" id="btnCenter">Neu ausrichten</button>
-    <button class="btn" id="btnCam">Kamera neu starten</button>
   </div>
+  <div class="btns"><button class="btn" id="btnCam">Kamera neu starten</button></div>
 </div>
 
 <div id="start" class="overlay">
@@ -126,11 +133,12 @@
   <ul>
     <li>📷 <b>Kamera</b> ist dein Hintergrund</li>
     <li>🧭 <b>Gyroskop:</b> Drohnen hängen fest im Raum. Dreh dich, um sie zu finden</li>
-    <li>🧱 <b>Kantenerkennung:</b> Echte Hindernisse lenken deine Kugeln ab und schützen dich vor Beschuss</li>
+    <li>🧱 <b>Hindernis wählen:</b> Tippe auf ein echtes Objekt (Schrank, Tür, Lampe). Es lenkt deine Kugeln ab und schützt dich vor Beschuss</li>
     <li>📐 <b>Schwerkraft-Sensor</b> im Labor: Kippe das Handy, die Kugeln rollen mit</li>
     <li>🤝 <b>Schütteln</b> löst die EMP-Welle aus</li>
   </ul>
   <button class="big" id="go">Starten</button>
+  <a class="backlink" href="index.html">← zurück zum Menü</a>
   <div id="status"></div>
   <p class="fine">Das Kamerabild wird nur auf deinem Gerät ausgewertet und nirgends gespeichert oder gesendet. Bitte im Hochformat spielen und etwas Platz zum Umdrehen lassen.</p>
 </div>
@@ -142,6 +150,7 @@
   <div class="stat">Rekord <b id="oBest">0</b></div>
   <p class="sub" style="margin-top:14px">Tipp: Stell dich so, dass echte Kanten zwischen dir und den Drohnen liegen.</p>
   <button class="big" id="again">Nochmal</button>
+  <a class="backlink" href="index.html">← zurück zum Menü</a>
 </div>
 <div id="rot" class="overlay" hidden>📱 Bitte im Hochformat spielen</div>
 
@@ -171,20 +180,21 @@
   // ======================================================================
   // Zustand & Speicher
   // ======================================================================
-  const save = { best: 0, fov: 62, sens: 10, edges: true, mode: 'hunt' };
+  const save = { best: 0, fov: 62, sens: 10, edges: true, mode: 'hunt', tol: 40, chaos: false };
   try { Object.assign(save, JSON.parse(localStorage.getItem('arLab.v1') || '{}')); } catch (e) {}
   const persist = () => { try { localStorage.setItem('arLab.v1', JSON.stringify(save)); } catch (e) {} };
   window.addEventListener('pagehide', persist);
 
   const cam = $('cam'), cv = $('cv'), ctx = cv.getContext('2d');
-  const S = { W: 390, H: 844, dpr: 1, insetT: 0, insetB: 0, f: 600, started: false, camOn: false, touchLook: false, portrait: true, mode: save.mode };
+  const S = { selecting: false, W: 390, H: 844, dpr: 1, insetT: 0, insetB: 0, f: 600, started: false, camOn: false, touchLook: false, portrait: true, mode: save.mode };
   let GW = 64, GH = 139, cellW = 6, cellH = 6, invCW = 1, invCH = 1;
   let gray, egx, egy, mag, solid, tmp, NX, NY, hit;
   const sc = document.createElement('canvas'), sctx = sc.getContext('2d', { willReadFrequently: true });
   const mid = document.createElement('canvas'), mctx = mid.getContext('2d');
   const ec = document.createElement('canvas'), ectx = ec.getContext('2d');
-  let eimg = null, grayInit = false;
-  const stats = { thr: 0, pct: 0, anMs: 0, anFps: 0, camRes: '–', lastAn: 0, lastCompose: 0 };
+  let eimg = null, grayInit = false, rgbArr, seen, queue, stampN = 0, obstacles = [];
+  const MAXOBS = 3;
+  const stats = { thr: 0, pct: 0, cells: 0, anMs: 0, anFps: 0, camRes: '–', lastAn: 0, lastCompose: 0 };
 
   // ======================================================================
   // Audio
@@ -275,7 +285,7 @@
     cellW = S.W / GW; cellH = S.H / GH; invCW = 1 / cellW; invCH = 1 / cellH;
     const n = GW * GH;
     gray = new Float32Array(n); egx = new Float32Array(n); egy = new Float32Array(n); mag = new Float32Array(n);
-    solid = new Uint8Array(n); tmp = new Uint8Array(n); NX = new Float32Array(n); NY = new Float32Array(n); hit = new Float32Array(n);
+    solid = new Uint8Array(n); tmp = new Uint8Array(n); rgbArr = new Uint8Array(n * 3); seen = new Uint16Array(n); queue = new Int32Array(n); stampN = 0; obstacles = []; NX = new Float32Array(n); NY = new Float32Array(n); hit = new Float32Array(n);
     grayInit = false;
     sc.width = GW; sc.height = GH; mid.width = GW * 4; mid.height = GH * 4; ec.width = GW; ec.height = GH;
     eimg = ectx.createImageData(GW, GH);
@@ -314,10 +324,23 @@
     sctx.drawImage(mid, 0, 0, GW, GH);                                      // ... dann auf Rasterauflösung mitteln
     const d = sctx.getImageData(0, 0, GW, GH).data, n = GW * GH;
     for (let i = 0; i < n; i++) {
+      rgbArr[i * 3] = d[i * 4]; rgbArr[i * 3 + 1] = d[i * 4 + 1]; rgbArr[i * 3 + 2] = d[i * 4 + 2];
       const v = (d[i * 4] * 77 + d[i * 4 + 1] * 150 + d[i * 4 + 2] * 29) >> 8;
       gray[i] = grayInit ? gray[i] * 0.45 + v * 0.55 : v;
     }
     grayInit = true;
+    solid.fill(0);
+    let cnt = 0;
+    if (save.chaos) cnt += chaosEdges();
+    cnt += trackObstacles();
+    buildNormals();
+    stats.cells = cnt; stats.pct = cnt / n * 100;
+    const now = performance.now(); stats.anMs = now - t0;
+    stats.anFps = stats.lastAn ? 0.8 * stats.anFps + 0.2 * (1000 / (now - stats.lastAn)) : 15; stats.lastAn = now;
+  }
+
+  // ---- Chaos-Modus: alle Kontrastkanten (Sobel) sind Hindernisse ----
+  function chaosEdges() {
     mag.fill(0);
     const hist = new Uint32Array(64);
     for (let y = 1; y < GH - 1; y++) {
@@ -334,21 +357,107 @@
     let cum = 0, thr = 2048;
     for (let b = 63; b >= 0; b--) { cum += hist[b]; if (cum >= target) { thr = b * 32; break; } }
     thr = Math.max(thr, CONFIG.minEdge); stats.thr = thr;
-    for (let i = 0; i < n; i++) tmp[i] = mag[i] >= thr ? 1 : 0;
+    const n = GW * GH; for (let i = 0; i < n; i++) tmp[i] = mag[i] >= thr ? 1 : 0;
     let cnt = 0;
     for (let y = 1; y < GH - 1; y++) {
       for (let x = 1; x < GW - 1; x++) {
-        const i = y * GW + x;
-        if (!tmp[i]) { solid[i] = 0; continue; }
+        const i = y * GW + x; if (!tmp[i]) continue;
         const nb = tmp[i - 1] + tmp[i + 1] + tmp[i - GW] + tmp[i + GW] + tmp[i - GW - 1] + tmp[i - GW + 1] + tmp[i + GW - 1] + tmp[i + GW + 1];
-        if (nb < 2) { solid[i] = 0; continue; }                                // Einzelpunkte = Rauschen
+        if (nb < 2) continue;
         solid[i] = 1; cnt++;
         const m = Math.hypot(egx[i], egy[i]) || 1; NX[i] = egx[i] / m; NY[i] = egy[i] / m;
       }
     }
-    stats.pct = cnt / total * 100;
-    const now = performance.now(); stats.anMs = now - t0;
-    stats.anFps = stats.lastAn ? 0.8 * stats.anFps + 0.2 * (1000 / (now - stats.lastAn)) : 15; stats.lastAn = now;
+    return cnt;
+  }
+
+  // ---- Hindernis per Antippen wählen: Farb-Region wächst vom Tippunkt aus ----
+  function colorDist2(i, ref) { const dr = rgbArr[i * 3] - ref[0], dg = rgbArr[i * 3 + 1] - ref[1], db = rgbArr[i * 3 + 2] - ref[2]; return dr * dr + dg * dg + db * db; }
+  function grow(seed, ref, tol, maxCells) {
+    if (++stampN > 65000) { seen.fill(0); stampN = 1; }
+    const t2 = tol * tol, st = stampN; let qh = 0, qt = 0; const cells = [];
+    queue[qt++] = seed; seen[seed] = st;
+    const tryPush = j => { if (seen[j] === st) return; seen[j] = st; if (colorDist2(j, ref) <= t2) queue[qt++] = j; };
+    while (qh < qt) {
+      const i = queue[qh++]; cells.push(i);
+      if (cells.length > maxCells) return { over: true, cells };
+      const x = i % GW, y = (i / GW) | 0;
+      if (x > 0) tryPush(i - 1); if (x < GW - 1) tryPush(i + 1); if (y > 0) tryPush(i - GW); if (y < GH - 1) tryPush(i + GW);
+    }
+    return { over: false, cells: tidy(cells) };
+  }
+  function tidy(cells) {          // Löcher füllen, Einzelpixel entfernen
+    const m = new Uint8Array(GW * GH); for (const i of cells) m[i] = 1;
+    const out = [];
+    for (let pass = 0; pass < 2; pass++) {
+      for (let y = 1; y < GH - 1; y++) for (let x = 1; x < GW - 1; x++) {
+        const i = y * GW + x; const nb = m[i - 1] + m[i + 1] + m[i - GW] + m[i + GW] + m[i - GW - 1] + m[i - GW + 1] + m[i + GW - 1] + m[i + GW + 1];
+        if (!m[i] && nb >= 6) m[i] = 1; else if (m[i] && nb <= 1) m[i] = 0;
+      }
+    }
+    for (let i = 0; i < m.length; i++) if (m[i]) out.push(i);
+    return out;
+  }
+  function unproject(x, y) {      // Bildschirmpunkt -> Richtung in der Welt (Azimut/Elevation)
+    const px = x - S.W / 2, py = -(y - S.H / 2), pz = -S.f, l = Math.hypot(px, py, pz), p0 = px / l, p1 = py / l, p2 = pz / l;
+    const d0 = R[0] * p0 + R[1] * p1 + R[2] * p2, d1 = R[3] * p0 + R[4] * p1 + R[5] * p2, d2 = R[6] * p0 + R[7] * p1 + R[8] * p2;
+    return { az: Math.atan2(d0, d1), el: Math.asin(clamp(d2, -1, 1)) };
+  }
+  const angDiff = (a, b) => { let d = a - b; while (d > Math.PI) d -= TAU; while (d < -Math.PI) d += TAU; return d; };
+  function selectAt(x, y) {
+    if (!S.camOn) { toast('Ohne Kamera gibt es nur feste Demo-Hindernisse.'); S.selecting = false; $('btnPick').classList.remove('on'); return; }
+    analyze();
+    const cx = clamp((x * invCW) | 0, 1, GW - 2), cy = clamp((y * invCH) | 0, 1, GH - 2), seed = cy * GW + cx;
+    const ref = [0, 0, 0];
+    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const j = seed + dy * GW + dx; ref[0] += rgbArr[j * 3] / 9; ref[1] += rgbArr[j * 3 + 1] / 9; ref[2] += rgbArr[j * 3 + 2] / 9; }
+    let tol = save.tol, res = null;
+    for (let k = 0; k < 5; k++) { res = grow(seed, ref, tol, GW * GH * 0.3); if (!res.over) break; tol *= 0.72; }
+    if (res.over) { toast('Dieses Objekt hebt sich kaum vom Hintergrund ab. Probier ein anderes oder senke die Toleranz.'); return; }
+    if (res.cells.length < 10) { toast('Zu klein oder zu unruhig erkannt. Tippe eine ruhigere Fläche oder erhöhe die Toleranz.'); return; }
+    const w = unproject(x, y);
+    obstacles.push({ az: w.az, el: w.el, ref, tol, area0: res.cells.length, cells: res.cells, vis: true, miss: 0, cx: x, cy: y });
+    while (obstacles.length > MAXOBS) obstacles.shift();
+    S.selecting = false; $('btnPick').classList.remove('on');
+    analyze(); sfx('wave'); addRing(x, y, '#7dff6a', 70, 0.6);
+    toast('Hindernis gesetzt (' + res.cells.length + ' Zellen). Bis zu ' + MAXOBS + ' gleichzeitig.');
+  }
+  function trackObstacles() {
+    let total = 0;
+    for (const o of obstacles) {
+      o.vis = false; o.cells = null;
+      const sp = project(o.az, o.el);
+      if (!sp.front) continue;
+      const sx = clamp((sp.x * invCW) | 0, 0, GW - 1), sy = clamp((sp.y * invCH) | 0, 0, GH - 1);
+      let best = -1, bd = 1e12;
+      for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) {
+        const x = sx + dx, y = sy + dy; if (x < 0 || y < 0 || x >= GW || y >= GH) continue;
+        const i = y * GW + x, dd = colorDist2(i, o.ref); if (dd < bd) { bd = dd; best = i; }
+      }
+      if (best < 0 || bd > (o.tol * 1.4) * (o.tol * 1.4)) { o.miss++; continue; }
+      o.miss = 0;
+      let tol = o.tol, res = null;
+      for (let k = 0; k < 4; k++) { res = grow(best, o.ref, tol, Math.max(60, o.area0 * 2.5)); if (!res.over) break; tol *= 0.75; }
+      if (res.over || res.cells.length < 8) continue;
+      o.vis = true; o.cells = res.cells;
+      let cx = 0, cy = 0; for (const c of res.cells) { cx += c % GW; cy += (c / GW) | 0; }
+      o.cx = (cx / res.cells.length + 0.5) * cellW; o.cy = (cy / res.cells.length + 0.5) * cellH;
+      const w = unproject(o.cx, o.cy); o.az += angDiff(w.az, o.az) * 0.35; o.el += (w.el - o.el) * 0.35;       // Anker folgt dem Objekt
+      for (let c = 0; c < 3; c++) o.ref[c] = o.ref[c] * 0.92 + rgbArr[best * 3 + c] * 0.08;                    // Licht ändert sich langsam
+      for (const c of res.cells) solid[c] = 2;
+      total += res.cells.length;
+    }
+    return total;
+  }
+  function buildNormals() {       // Normalen der gewählten Objekte aus dem Gradienten der Maske
+    const O = (i) => solid[i] === 2 ? 1 : 0;
+    for (let y = 2; y < GH - 2; y++) for (let x = 2; x < GW - 2; x++) {
+      const i = y * GW + x; if (solid[i] !== 2) continue;
+      let gx = 0, gy = 0;
+      for (let dy = -2; dy <= 2; dy++) { const r = (y + dy) * GW + x; for (let dx = 1; dx <= 2; dx++) gx += O(r + dx) - O(r - dx); }
+      for (let dx = -2; dx <= 2; dx++) for (let dy = 1; dy <= 2; dy++) gy += O((y + dy) * GW + x + dx) - O((y - dy) * GW + x + dx);
+      const m = Math.hypot(gx, gy);
+      if (m < 0.5) { NX[i] = 0; NY[i] = 0; } else { NX[i] = gx / m; NY[i] = gy / m; }
+    }
   }
 
   // Ohne Kamera: feste Demo-Hindernisse, damit alles trotzdem spielbar ist
@@ -357,8 +466,8 @@
     solid.fill(0);
     const box = (x0, y0, x1, y1) => {
       const X0 = Math.round(x0 * GW), X1 = Math.round(x1 * GW), Y0 = Math.round(y0 * GH), Y1 = Math.round(y1 * GH);
-      for (let x = X0; x <= X1; x++) for (const y of [Y0, Y0 + 1, Y1, Y1 + 1]) { const i = y * GW + x; solid[i] = 1; NX[i] = 0; NY[i] = 1; }
-      for (let y = Y0; y <= Y1 + 1; y++) for (const x of [X0, X0 + 1, X1 - 1, X1]) { const i = y * GW + x; solid[i] = 1; NX[i] = 1; NY[i] = 0; }
+      for (let x = X0; x <= X1; x++) for (const y of [Y0, Y0 + 1, Y1, Y1 + 1]) { const i = y * GW + x; solid[i] = 2; NX[i] = 0; NY[i] = 1; }
+      for (let y = Y0; y <= Y1 + 1; y++) for (const x of [X0, X0 + 1, X1 - 1, X1]) { const i = y * GW + x; solid[i] = 2; NX[i] = 1; NY[i] = 0; }
     };
     box(0.12, 0.30, 0.45, 0.38); box(0.58, 0.46, 0.90, 0.54); box(0.28, 0.63, 0.62, 0.70);
   }
@@ -379,8 +488,12 @@
     const px = eimg.data, n = GW * GH, dec = Math.exp(-dt * 3.2);
     for (let i = 0; i < n; i++) {
       let h = hit[i]; if (h > 0.01) { h *= dec; hit[i] = h; } else { h = 0; hit[i] = 0; }
-      const o = i * 4, k = h > 1 ? 1 : h;
-      if (solid[i]) { px[o] = 255 * k; px[o + 1] = 240 + 15 * k; px[o + 2] = 255; px[o + 3] = 150 + 105 * k; }
+      const o = i * 4, k = h > 1 ? 1 : h, v = solid[i];
+      if (v === 2) {
+        const x = i % GW, y = (i / GW) | 0;
+        const edge = x === 0 || y === 0 || x === GW - 1 || y === GH - 1 || solid[i - 1] !== 2 || solid[i + 1] !== 2 || solid[i - GW] !== 2 || solid[i + GW] !== 2;
+        px[o] = 125 + 130 * k; px[o + 1] = 255; px[o + 2] = 106 + 149 * k; px[o + 3] = edge ? 235 : 70 + 120 * k;
+      } else if (v === 1) { px[o] = 255 * k; px[o + 1] = 240 + 15 * k; px[o + 2] = 255; px[o + 3] = 150 + 105 * k; }
       else if (h > 0.03) { px[o] = 255; px[o + 1] = 255; px[o + 2] = 255; px[o + 3] = Math.min(140, h * 120); }
       else px[o + 3] = 0;
     }
@@ -412,7 +525,7 @@
     drones = []; bolts = []; balls = []; texts = [];
     Object.assign(G, { hp: CONFIG.coreHp, score: 0, wave: 0, over: false, fireCd: 0, emp: 0, nextWave: 0.6, hurt: 0, banner: null, shake: 0, kills: 0 });
     $('over').hidden = true;
-    setBanner('BEREIT?', 'Dreh dich um · tippe auf Drohnen');
+    setBanner('BEREIT?', '🧱 oben wählt ein Objekt als Deckung');
   }
   function spawnWave() {
     G.wave++;
@@ -593,6 +706,7 @@
   // ======================================================================
   function press(x, y) {
     if (!S.started) return;
+    if (S.selecting) { selectAt(x, y); return; }
     if (S.mode === 'hunt') fireBall(x, y); else spawnLabBall(x, y);
   }
   cv.addEventListener('pointerdown', e => {
@@ -616,7 +730,6 @@
   };
   cv.addEventListener('pointerup', endPtr); cv.addEventListener('pointercancel', endPtr);
   document.addEventListener('gesturestart', e => e.preventDefault());
-  document.addEventListener('touchmove', e => { if (!e.target.closest('#sheet')) e.preventDefault(); }, { passive: false });
 
   // ======================================================================
   // UI
@@ -638,10 +751,25 @@
   $('again').addEventListener('click', () => { audio(); resetHunt(); });
   function syncSheet() {
     $('fov').value = save.fov; $('fovV').textContent = save.fov + '°'; $('sens2').value = save.sens; $('sensV').textContent = save.sens + ' %'; $('edgesChk').checked = save.edges;
+    $('tol').value = save.tol; $('tolV').textContent = save.tol; $('chaosChk').checked = save.chaos; $('sensRow').hidden = !save.chaos;
   }
   $('fov').addEventListener('input', e => { save.fov = +e.target.value; S.f = (S.H / 2) / Math.tan(save.fov * Math.PI / 360); syncSheet(); persist(); });
   $('sens2').addEventListener('input', e => { save.sens = +e.target.value; syncSheet(); persist(); });
   $('edgesChk').addEventListener('change', e => { save.edges = e.target.checked; persist(); });
+  $('tol').addEventListener('input', e => { save.tol = +e.target.value; syncSheet(); persist(); });
+  $('chaosChk').addEventListener('change', e => { save.chaos = e.target.checked; syncSheet(); persist(); });
+  $('btnClear').addEventListener('click', () => { obstacles = []; solid.fill(0); if (!S.camOn) buildDemoObstacles(); toast('Alle Hindernisse gelöscht'); });
+  $('btnPick').addEventListener('click', () => {
+    audio(); if (!S.started) return;
+    S.selecting = !S.selecting; $('btnPick').classList.toggle('on', S.selecting); $('sheet').hidden = true;
+    if (S.selecting) toast(S.camOn ? 'Tippe auf ein Objekt im Kamerabild' : 'Ohne Kamera: feste Demo-Hindernisse');
+  });
+  function leave() {
+    try { if (cam.srcObject) cam.srcObject.getTracks().forEach(t => t.stop()); } catch (e) {}
+    persist(); window.location.href = 'index.html';
+  }
+  $('btnBack').addEventListener('click', leave);
+  window.addEventListener('pagehide', () => { try { if (cam.srcObject) cam.srcObject.getTracks().forEach(t => t.stop()); } catch (e) {} });
   $('btnCenter').addEventListener('click', () => {
     look.yaw = 0; look.pitch = 0;
     if (S.mode === 'hunt' && !G.over) { drones = []; bolts = []; G.wave = Math.max(0, G.wave - 1); G.nextWave = 0.3; }
@@ -680,6 +808,7 @@
     setTimeout(() => {
       if (!ori.have) { S.touchLook = true; toast(sensorOK ? 'Keine Sensordaten – Touch-Look aktiv: Finger ziehen = umsehen' : 'Bewegungssensoren abgelehnt – Touch-Look aktiv: Finger ziehen = umsehen'); }
       else if (!camOK) toast('Keine Kamera (' + camErr + ') – Demo-Hindernisse aktiv');
+      else toast('Tippe oben auf 🧱 und dann auf ein Möbelstück im Bild: Das wird dein Hindernis.');
     }, 1500);
   });
 
@@ -785,6 +914,14 @@
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     for (const t of texts) { ctx.globalAlpha = Math.max(0, t.life / t.max); ctx.fillStyle = t.col; ctx.font = '800 ' + t.size + 'px -apple-system,system-ui,sans-serif'; ctx.fillText(t.txt, t.x, t.y); }
     ctx.globalAlpha = 1;
+    ctx.font = '800 11px -apple-system,system-ui,sans-serif'; ctx.fillStyle = 'rgba(125,255,106,.95)';
+    for (const o of obstacles) if (o.vis) ctx.fillText('DECKUNG', o.cx, o.cy);
+    if (S.selecting) {
+      const pul = 0.65 + 0.35 * Math.sin(performance.now() / 180);
+      ctx.globalAlpha = pul; ctx.fillStyle = '#7dff6a'; ctx.font = '800 17px -apple-system,system-ui,sans-serif';
+      ctx.fillText('Tippe auf ein Objekt im Bild', W / 2, S.insetT + 118);
+      ctx.strokeStyle = '#7dff6a'; ctx.lineWidth = 2; ctx.strokeRect(10, S.insetT + 66, W - 20, H - S.insetT - S.insetB - 100); ctx.globalAlpha = 1;
+    }
     if (G.banner) {
       const b = G.banner, a = b.t < 0.25 ? b.t / 0.25 : b.t > b.life - 0.5 ? Math.max(0, (b.life - b.t) / 0.5) : 1;
       ctx.globalAlpha = a; ctx.fillStyle = '#fff'; ctx.shadowColor = '#00f0ff'; ctx.shadowBlur = 18;
@@ -808,7 +945,7 @@
       $('sens').textContent =
         'KAMERA    ' + (S.camOn ? stats.camRes : 'aus') + '\n' +
         'ANALYSE   ' + stats.anFps.toFixed(0) + ' fps · ' + stats.anMs.toFixed(1) + ' ms\n' +
-        'KANTEN    ' + stats.pct.toFixed(1) + ' % · Schwelle ' + stats.thr.toFixed(0) + '\n' +
+        'HINDERNIS ' + obstacles.filter(o => o.vis).length + '/' + obstacles.length + ' aktiv · ' + stats.cells + ' Zellen' + (save.chaos ? ' (Chaos)' : '') + '\n' +
         (S.touchLook ? 'LAGE      Touch-Look (kein Sensor)\n' : 'LAGE      α ' + ori.a.toFixed(0) + '  β ' + ori.b.toFixed(0) + '  γ ' + ori.g.toFixed(0) + '\n') +
         'NEIGUNG   ' + pitch.toFixed(0) + '° ' + (pitch > 8 ? 'nach oben' : pitch < -8 ? 'nach unten' : 'waagerecht') + '\n' +
         'KOMPASS   ' + (ori.compass != null ? ori.compass.toFixed(0) + '°' : '–') + '\n' +
@@ -843,7 +980,7 @@
 
   // Test-Zugang (harmlos)
   window.__AR = { S, G, save, ori, look, stats, CONFIG, get drones() { return drones; }, get bolts() { return bolts; }, get balls() { return balls; },
-    get solid() { return solid; }, get NX() { return NX; }, get NY() { return NY; }, stepBall, project, fireBall, setMode, emp, analyze, spawnLabBall, forwardAz, gravityScreen, edgeIdx, core };
+    get solid() { return solid; }, get obstacles() { return obstacles; }, get NX() { return NX; }, get NY() { return NY; }, stepBall, project, fireBall, setMode, emp, analyze, spawnLabBall, forwardAz, gravityScreen, edgeIdx, core };
 })();
 </script>
 </body>
