@@ -66,12 +66,12 @@
 
     .mini {
       position: absolute;
-      top: calc(76px + env(safe-area-inset-top));
+      top: calc(72px + env(safe-area-inset-top));
       right: calc(12px + env(safe-area-inset-right));
       display: flex; gap: 8px; z-index: 10;
     }
     .round {
-      height: 34px; padding: 0 12px; border-radius: 17px;
+      height: 30px; padding: 0 10px; border-radius: 15px;
       border: 1px solid rgba(0,240,255,0.6);
       background: rgba(8,16,32,0.85); color: #00f0ff;
       font-size: 13px; font-weight: 800; font-family: inherit; cursor: pointer;
@@ -102,28 +102,38 @@
 
     /* Toolbar */
     .toolbar {
-      position: absolute;
+      position: absolute; gap: 6px;
       bottom: calc(16px + env(safe-area-inset-bottom));
       left: calc(12px + env(safe-area-inset-left));
       right: calc(12px + env(safe-area-inset-right));
-      display: flex; gap: 8px; z-index: 10;
+      display: flex; gap: 6px; z-index: 10;
     }
     .tbtn {
       flex: 1 1 0; min-width: 0;
       display: flex; flex-direction: column; align-items: center; gap: 1px;
-      padding: 8px 4px; border-radius: 14px;
+      padding: 6px 2px; border-radius: 12px;
       border: 1px solid var(--c); background: rgba(8,16,32,0.9); color: var(--c);
       font-family: inherit; cursor: pointer;
       box-shadow: 0 4px 15px rgba(0,0,0,0.5);
       -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
     }
-    .tbtn .tn { font-size: 12px; font-weight: 800; }
-    .tbtn .tc { font-size: 15px; font-weight: 900; color: #fff; font-variant-numeric: tabular-nums; }
+    .tbtn .tn { font-size: 19px; line-height: 22px; font-weight: 800; }
+    .tbtn .tc { font-size: 13px; font-weight: 900; color: #fff; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .tbtn.locked { opacity: 0.4; filter: grayscale(0.6); }
+    .tbtn.locked .tc { color: rgba(255,255,255,0.8); font-size: 10px; line-height: 17px; }
+    .tbtn.fresh { animation: fresh 1.2s 3; }
+    @keyframes fresh { 0%,100% { box-shadow: 0 4px 15px rgba(0,0,0,0.5); } 50% { box-shadow: 0 0 22px var(--c), inset 0 0 12px var(--c); } }
+    #hint {
+      position: absolute; left: 0; right: 0; text-align: center; pointer-events: none; z-index: 9;
+      bottom: calc(86px + env(safe-area-inset-bottom));
+      font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.7); padding: 0 16px;
+      text-shadow: 0 0 6px #000;
+    }
     .tbtn.active { background: rgba(255,255,255,0.14); box-shadow: 0 0 14px var(--c), inset 0 0 10px rgba(255,255,255,0.1); }
     .tbtn.poor .tc { color: #ff4757; }
     .tbtn:active { transform: scale(0.96); }
     .shock {
-      flex: 0 0 62px; border-radius: 14px;
+      flex: 0 0 46px; border-radius: 12px;
       border: 1px solid #ff4757; background: rgba(8,16,32,0.9); color: #ff4757;
       font-size: 17px; font-weight: 900; font-family: inherit; cursor: pointer;
       box-shadow: 0 4px 15px rgba(0,0,0,0.5);
@@ -181,6 +191,8 @@
     <button class="round" id="muteBtn" aria-label="Ton an/aus">🔊</button>
   </div>
 
+  <div id="hint"></div>
+
   <div id="panel">
     <span id="pTitle"></span>
     <button class="pbtn" id="upBtn"></button>
@@ -188,9 +200,12 @@
   </div>
 
   <div class="toolbar">
-    <button class="tbtn" data-type="laser" style="--c:#00f0ff"><span class="tn">⚡ Laser</span><span class="tc">30</span></button>
-    <button class="tbtn" data-type="pulse" style="--c:#ffd32a"><span class="tn">🌀 Puls</span><span class="tc">50</span></button>
-    <button class="tbtn" data-type="arc" style="--c:#b46bff"><span class="tn">🔗 Arc</span><span class="tc">70</span></button>
+    <button class="tbtn" data-type="laser" style="--c:#00f0ff"><span class="tn">⚡</span><span class="tc">20</span></button>
+    <button class="tbtn" data-type="pulse" style="--c:#ffd32a"><span class="tn">🌀</span><span class="tc">35</span></button>
+    <button class="tbtn" data-type="arc" style="--c:#b46bff"><span class="tn">🔗</span><span class="tc">50</span></button>
+    <button class="tbtn" data-type="cryo" style="--c:#7dd3ff"><span class="tn">❄️</span><span class="tc">45</span></button>
+    <button class="tbtn" data-type="rail" style="--c:#ff8c42"><span class="tn">🎯</span><span class="tc">140</span></button>
+    <button class="tbtn" data-type="nova" style="--c:#ff3df0"><span class="tn">☄️</span><span class="tc">220</span></button>
     <button class="shock" id="shockBtn">💥</button>
   </div>
 
@@ -218,9 +233,9 @@
     shockCooldown: 25,
     sellRatio: 0.6,
     maxTowerLevel: 8,
-    maxTowers: 14,          // Turm-Limit
-    towerCostGrowth: 0.28,  // jeder vorhandene Turm macht den nächsten +28 % teurer
-    hpGrowth: 1.17,         // Gegner-Leben pro Welle (exponentiell)
+    maxTowers: 20,          // Turm-Limit
+    towerCostGrowth: 0.10,  // jeder vorhandene Turm macht den nächsten +10 % teurer
+    hpGrowth: 1.15,         // Gegner-Leben pro Welle (exponentiell)
     hpLinear: 0.15,         // zusätzlicher linearer Anteil pro Welle ...
     hpLinearStart: 4,       // ... der erst nach dieser Welle greift (frühe Wellen bleiben fair)
     speedGrowth: 0.02,      // Gegner-Tempo pro Welle (max. +50 %)
@@ -231,9 +246,12 @@
   };
 
   const TDEF = {
-    laser: { name: 'Laser', icon: '⚡', color: '#00f0ff', cost: 30 },
-    pulse: { name: 'Puls',  icon: '🌀', color: '#ffd32a', cost: 50 },
-    arc:   { name: 'Arc',   icon: '🔗', color: '#b46bff', cost: 70 }
+    laser: { name: 'Laser', icon: '⚡', color: '#00f0ff', cost: 20,  unlock: 0,  desc: 'Dauerstrahl – wird heißer, je länger er trifft' },
+    pulse: { name: 'Puls',  icon: '🌀', color: '#ffd32a', cost: 35,  unlock: 0,  desc: 'Druckwelle – trifft alle in der Nähe, stößt zurück' },
+    arc:   { name: 'Arc',   icon: '🔗', color: '#b46bff', cost: 50,  unlock: 0,  desc: 'Kettenblitz – springt von Gegner zu Gegner' },
+    cryo:  { name: 'Kryo',  icon: '❄️', color: '#7dd3ff', cost: 45,  unlock: 3,  desc: 'Bremsfeld – verlangsamt alle Gegner in Reichweite' },
+    rail:  { name: 'Rail',  icon: '🎯', color: '#ff8c42', cost: 140, unlock: 6,  desc: 'Railgun – durchschlägt alles in einer Linie' },
+    nova:  { name: 'Nova',  icon: '☄️', color: '#ff3df0', cost: 220, unlock: 10, desc: 'Plasma-Einschlag – Flächenschaden auf Gegnerhaufen' }
   };
 
   const EDEF = {
@@ -246,7 +264,7 @@
   };
 
   const TAU = Math.PI * 2;
-  const CORE_R = 26;
+  const CORE_R = 15;
   const rand = (a, b) => a + Math.random() * (b - a);
   const dist = (a, b, c, d) => Math.hypot(a - c, b - d);
 
@@ -310,6 +328,9 @@
     upgrade(){ [523, 659, 783, 1046].forEach((f, i) => tone(f, f, 0.12, 'triangle', 0.14, i * 0.07)); },
     sell()   { tone(700, 350, 0.15, 'triangle', 0.12); },
     hit()    { if (ok('hit', 80))   tone(120, 40, 0.3, 'sawtooth', 0.3); },
+    rail()   { if (ok('rail', 80)) { tone(1400, 90, 0.3, 'sawtooth', 0.12); tone(70, 40, 0.25, 'sine', 0.2); } },
+    nova()   { if (ok('nova', 80)) { tone(220, 40, 0.45, 'square', 0.1); tone(90, 30, 0.4, 'sine', 0.2); } },
+    unlock() { [523, 784, 1046, 1568].forEach((f, i) => tone(f, f, 0.16, 'triangle', 0.14, i * 0.08)); },
     wave()   { tone(80, 160, 0.5, 'sawtooth', 0.12); },
     boss()   { tone(60, 35, 1.0, 'sawtooth', 0.25); },
     shock()  { tone(300, 30, 0.5, 'sawtooth', 0.28); },
@@ -366,8 +387,8 @@
     const cs = getComputedStyle(probe);
     const insT = parseFloat(cs.paddingTop) || 0;
     const insB = parseFloat(cs.paddingBottom) || 0;
-    bounds.top = insT + 124;
-    bounds.bottom = H - (insB + 100);
+    bounds.top = insT + 74;
+    bounds.bottom = H - (insB + 84);
     bounds.left = 14;
     bounds.right = W - 14;
     cx = W / 2;
@@ -400,7 +421,7 @@
       shockCd: 0, combo: 0, comboT: 0,
       selected: null, buildType: 'laser',
       shake: 0, hitStop: 0, coreFlash: 0,
-      banner: null
+      banner: null, unlockMsg: null
     };
     document.getElementById('over').classList.remove('show');
     ui.reset();
@@ -409,11 +430,17 @@
   // ---------- Türme ----------
   function tstats(t) {
     const l = t.lvl - 1;
-    if (t.type === 'laser') return { range: 130 + l * 14, dps: 22 * (1 + 0.7 * l) };
-    if (t.type === 'pulse') return { range: 90 + l * 10, dmg: 14 * (1 + 0.6 * l), cd: Math.max(0.7, 1.5 - l * 0.15) };
-    return { range: 150 + l * 10, dmg: 18 * (1 + 0.55 * l), cd: Math.max(0.5, 0.95 - l * 0.08), chains: 2 + l };
+    switch (t.type) {
+      case 'laser': return { range: 140 + l * 14, dps: 30 * (1 + 0.75 * l) };
+      case 'pulse': return { range: 100 + l * 10, dmg: 22 * (1 + 0.65 * l), cd: Math.max(0.6, 1.3 - l * 0.14) };
+      case 'arc':   return { range: 160 + l * 10, dmg: 26 * (1 + 0.6 * l), cd: Math.max(0.45, 0.9 - l * 0.08), chains: 3 + l };
+      case 'cryo':  return { range: 115 + l * 10, slow: Math.max(0.3, 0.6 - l * 0.04), dps: 8 * (1 + 0.6 * l) };
+      case 'rail':  return { range: 260 + l * 15, dmg: 170 * (1 + 0.7 * l), cd: Math.max(1.5, 2.8 - l * 0.17) };
+      default:      return { range: 200 + l * 10, dmg: 95 * (1 + 0.6 * l), cd: Math.max(1.1, 2.1 - l * 0.12), rad: 70 + l * 6 };
+    }
   }
-  const upgradeCost = (t) => Math.round(TDEF[t.type].cost * (0.6 + 0.5 * t.lvl));
+  const unlocked = (type) => g.wave >= TDEF[type].unlock;
+  const upgradeCost = (t) => Math.round(TDEF[t.type].cost * (0.45 + 0.35 * t.lvl));
   const sellValue = (t) => Math.floor(t.invested * CONFIG.sellRatio);
   const towerCost = (type) => Math.round(TDEF[type].cost * (1 + CONFIG.towerCostGrowth * towers.length));
 
@@ -426,8 +453,8 @@
 
   function canPlace(x, y) {
     if (x < bounds.left + 16 || x > bounds.right - 16 || y < bounds.top || y > bounds.bottom) return false;
-    if (dist(x, y, cx, cy) < 62) return false;
-    for (const t of towers) if (dist(x, y, t.x, t.y) < 40) return false;
+    if (dist(x, y, cx, cy) < 38) return false;
+    for (const t of towers) if (dist(x, y, t.x, t.y) < 34) return false;
     return true;
   }
   function towerAt(x, y) {
@@ -445,7 +472,7 @@
     const mul = Math.pow(CONFIG.hpGrowth, n - 1) * (1 + CONFIG.hpLinear * Math.max(0, n - CONFIG.hpLinearStart));
     const spdMul = 1 + Math.min(0.5, CONFIG.speedGrowth * (n - 1));
     const dmgMul = 1 + CONFIG.dmgGrowth * (n - 1);
-    const bossMul = type === 'boss' ? Math.min(1, 0.4 + 0.04 * n) : 1;
+    const bossMul = type === 'boss' ? (n >= 15 ? 0.55 : Math.min(1, 0.4 + 0.04 * n)) : 1;
     if (x === undefined) {
       const a = rand(0, TAU);
       const R = Math.hypot(W, H) / 2 + 40;
@@ -461,7 +488,7 @@
       spd: d.spd * spdMul * rand(0.92, 1.08), r: d.r,
       rew: Math.max(1, Math.round(d.rew * (1 + n * CONFIG.rewardGrowth))),
       dmg: d.dmg * dmgMul, color: d.color,
-      kx: 0, ky: 0, flash: 0, dead: false,
+      kx: 0, ky: 0, flash: 0, dead: false, slow: 1,
       ang: 0, rot: rand(0, TAU), addT: 3
     });
     if (type === 'boss') { sfx.boss(); g.shake = Math.max(g.shake, 8); }
@@ -606,6 +633,14 @@
     const boss = g.wave % 5 === 0;
     g.banner = { txt: boss ? '⚠ BOSS-WELLE ' + g.wave : 'WELLE ' + g.wave, t: 0, life: 2, color: boss ? '#ff4757' : '#00f0ff' };
     sfx.wave();
+    for (const k in TDEF) {
+      if (TDEF[k].unlock === g.wave && g.wave > 0) {
+        g.unlockMsg = { txt: TDEF[k].icon + ' ' + TDEF[k].name.toUpperCase() + ' FREIGESCHALTET', t: 0, life: 3.2, type: k };
+        sfx.unlock();
+        const b = tbtns.find(x => x.dataset.type === k);
+        if (b) { b.classList.remove('fresh'); void b.offsetWidth; b.classList.add('fresh'); }
+      }
+    }
   }
   function endWave() {
     const bonus = CONFIG.waveBonusBase + g.wave * CONFIG.waveBonusPer;
@@ -637,8 +672,10 @@
       if (e.dead) continue;
       const dx = cx - e.x, dy = cy - e.y, d = Math.hypot(dx, dy) || 1;
       e.ang = Math.atan2(dy, dx);
-      e.x += (dx / d) * e.spd * dt + e.kx * dt;
-      e.y += (dy / d) * e.spd * dt + e.ky * dt;
+      const sp = e.spd * e.slow;
+      e.slow = 1;
+      e.x += (dx / d) * sp * dt + e.kx * dt;
+      e.y += (dy / d) * sp * dt + e.ky * dt;
       e.kx *= kd; e.ky *= kd;
       e.rot += dt * (e.type === 'boss' ? 0.8 : 2);
       if (e.flash > 0) e.flash -= dt;
@@ -732,6 +769,70 @@
           }
         }
 
+      } else if (t.type === 'cryo') {
+        let any = false;
+        for (const e of enemies) {
+          if (e.dead || dist(t.x, t.y, e.x, e.y) - e.r > s.range) continue;
+          e.slow = Math.min(e.slow, s.slow);
+          damage(e, s.dps * dt, false);
+          any = true;
+        }
+        t.heat = any ? Math.min(1, t.heat + dt * 2) : Math.max(0, t.heat - dt * 2);
+
+      } else if (t.type === 'rail') {
+        t.cd -= dt;
+        if (t.cd <= 0) {
+          let tg = null, bh = -1;
+          for (const e of enemies) {
+            if (e.dead || dist(t.x, t.y, e.x, e.y) - e.r > s.range) continue;
+            const v = e.hp + e.shield;
+            if (v > bh) { bh = v; tg = e; }
+          }
+          if (tg) {
+            t.cd = s.cd; t.pulse = 1; sfx.rail();
+            const dx = tg.x - t.x, dy = tg.y - t.y, d = Math.hypot(dx, dy) || 1, ux = dx / d, uy = dy / d;
+            const L = s.range + 40;
+            for (const e of enemies) {
+              if (e.dead) continue;
+              const rx = e.x - t.x, ry = e.y - t.y, proj = rx * ux + ry * uy;
+              if (proj < 0 || proj > L) continue;
+              if (Math.abs(rx * uy - ry * ux) <= e.r + 8) {
+                damage(e, s.dmg);
+                burst(e.x, e.y, '#ff8c42', 6, 160, 0.4);
+              }
+            }
+            bolts.push({ segs: [[[t.x, t.y], [t.x + ux * L, t.y + uy * L]]], t: 0, life: 0.28, color: '#ff8c42', w: 4 });
+            g.shake = Math.max(g.shake, 2.5);
+          }
+        }
+
+      } else if (t.type === 'nova') {
+        t.cd -= dt;
+        if (t.cd <= 0) {
+          let tg = null, bn = -1;
+          for (const e of enemies) {
+            if (e.dead || dist(t.x, t.y, e.x, e.y) - e.r > s.range) continue;
+            let n = 0;
+            for (const o of enemies) if (!o.dead && dist(e.x, e.y, o.x, o.y) < s.rad) n++;
+            n += (e.type === 'boss' ? 4 : 0);
+            if (n > bn) { bn = n; tg = e; }
+          }
+          if (tg) {
+            t.cd = s.cd; t.pulse = 1; sfx.nova();
+            const ix = tg.x, iy = tg.y;
+            for (const e of enemies) {
+              if (e.dead) continue;
+              const d = dist(ix, iy, e.x, e.y);
+              if (d <= s.rad + e.r) damage(e, s.dmg * (1 - 0.4 * Math.min(1, d / (s.rad + e.r))));
+            }
+            bolts.push({ segs: [[[t.x, t.y], [ix, iy]]], t: 0, life: 0.18, color: '#ff3df0', w: 2 });
+            rings.push({ x: ix, y: iy, max: s.rad, t: 0, life: 0.45, color: '#ff3df0' });
+            rings.push({ x: ix, y: iy, max: s.rad * 0.6, t: 0, life: 0.3, color: '#ffffff' });
+            burst(ix, iy, '#ff3df0', 22, 220, 0.6);
+            g.shake = Math.max(g.shake, 4);
+          }
+        }
+
       } else { // arc
         t.cd -= dt;
         if (t.cd <= 0) {
@@ -789,6 +890,7 @@
       g.banner.t += dt;
       if (g.banner.t >= g.banner.life) g.banner = null;
     }
+    if (g.unlockMsg) { g.unlockMsg.t += dt; if (g.unlockMsg.t >= g.unlockMsg.life) g.unlockMsg = null; }
     if (g.coreFlash > 0) g.coreFlash = Math.max(0, g.coreFlash - dt * 4);
   }
 
@@ -823,19 +925,19 @@
   function drawCore() {
     const frac = Math.max(0, g.hp / g.maxHp);
     const col = frac > 0.5 ? '#00f0ff' : frac > 0.25 ? '#ffd32a' : '#ff4757';
-    const gr = ctx.createRadialGradient(cx, cy, 0, cx, cy, 72);
+    const gr = ctx.createRadialGradient(cx, cy, 0, cx, cy, 46);
     gr.addColorStop(0, col + '88'); gr.addColorStop(1, col + '00');
     ctx.fillStyle = gr;
-    ctx.beginPath(); ctx.arc(cx, cy, 72, 0, TAU); ctx.fill();
+    ctx.beginPath(); ctx.arc(cx, cy, 46, 0, TAU); ctx.fill();
 
     ctx.lineWidth = 2; ctx.strokeStyle = col;
     ctx.setLineDash([12, 9]); ctx.lineDashOffset = -tNow * 0.02;
     ctx.globalAlpha = 0.6;
-    ctx.beginPath(); ctx.arc(cx, cy, CORE_R + 12, 0, TAU); ctx.stroke();
+    ctx.beginPath(); ctx.arc(cx, cy, CORE_R + 9, 0, TAU); ctx.stroke();
     ctx.setLineDash([]); ctx.globalAlpha = 1;
 
     ctx.beginPath();
-    ctx.arc(cx, cy, CORE_R + 22, -Math.PI / 2, -Math.PI / 2 + TAU * frac);
+    ctx.arc(cx, cy, CORE_R + 16, -Math.PI / 2, -Math.PI / 2 + TAU * frac);
     glowStroke(col, 3);
 
     ctx.beginPath();
@@ -843,7 +945,7 @@
     ctx.fillStyle = col + '44'; ctx.fill();
     glowStroke(col, 3);
 
-    ctx.beginPath(); ctx.arc(cx, cy, 8 + 2 * Math.sin(tNow * 0.006), 0, TAU);
+    ctx.beginPath(); ctx.arc(cx, cy, 5 + 1.5 * Math.sin(tNow * 0.006), 0, TAU);
     ctx.fillStyle = g.coreFlash > 0.2 ? '#ffffff' : col; ctx.fill();
   }
 
@@ -852,11 +954,25 @@
     ctx.beginPath(); ctx.arc(t.x, t.y, 17, 0, TAU);
     ctx.fillStyle = col + '22'; ctx.fill();
     ctx.beginPath();
-    poly(t.x, t.y, 14, t.type === 'laser' ? 3 : t.type === 'pulse' ? 6 : 4,
-         tNow * 0.001 * (t.type === 'arc' ? 2 : 0.6));
+    const SIDES = { laser: 3, pulse: 6, arc: 4, cryo: 6, rail: 5, nova: 8 };
+    poly(t.x, t.y, t.type === 'nova' || t.type === 'rail' ? 15 : 14, SIDES[t.type],
+         tNow * 0.001 * (t.type === 'arc' ? 2 : t.type === 'rail' ? 0.2 : 0.6));
     glowStroke(col, 2);
+    if (t.type === 'cryo' || t.type === 'nova' || t.type === 'rail') {
+      ctx.beginPath(); poly(t.x, t.y, 8, t.type === 'cryo' ? 6 : 4, -tNow * 0.0015);
+      glowStroke(col, 1.5);
+    }
+    if (t.type === 'cryo') {
+      ctx.beginPath(); ctx.arc(t.x, t.y, t.s.range, 0, TAU);
+      ctx.strokeStyle = col; ctx.globalAlpha = 0.07 + 0.1 * t.heat; ctx.lineWidth = 1.5; ctx.stroke(); ctx.globalAlpha = 1;
+    }
     ctx.beginPath(); ctx.arc(t.x, t.y, 4 + t.pulse * 4, 0, TAU);
     ctx.fillStyle = t.pulse > 0.2 ? '#fff' : col; ctx.fill();
+    if (t.type === 'rail' || t.type === 'nova') {
+      const f = Math.min(1, 1 - Math.max(0, t.cd) / t.s.cd);
+      ctx.beginPath(); ctx.arc(t.x, t.y, 19, -Math.PI / 2, -Math.PI / 2 + TAU * f);
+      ctx.strokeStyle = col; ctx.globalAlpha = 0.8; ctx.lineWidth = 2; ctx.stroke(); ctx.globalAlpha = 1;
+    }
     if (t.type === 'pulse') {
       const f = 1 - Math.max(0, t.cd) / t.s.cd;
       ctx.beginPath(); ctx.arc(t.x, t.y, 6 + Math.min(1, f) * 8, 0, TAU);
@@ -962,7 +1078,7 @@
         ctx.moveTo(seg[0][0], seg[0][1]);
         for (let i = 1; i < seg.length; i++) ctx.lineTo(seg[i][0], seg[i][1]);
         ctx.globalAlpha = a;
-        glowStroke(b.color, 2);
+        glowStroke(b.color, b.w || 2);
       }
     }
     ctx.globalAlpha = 1;
@@ -987,7 +1103,7 @@
     // Baugeist
     if (aim.on && !g.selected && !towerAt(aim.x, aim.y) && !g.over) {
       const def = TDEF[g.buildType];
-      const valid = canPlace(aim.x, aim.y) && g.energy >= towerCost(g.buildType) && towers.length < CONFIG.maxTowers;
+      const valid = unlocked(g.buildType) && canPlace(aim.x, aim.y) && g.energy >= towerCost(g.buildType) && towers.length < CONFIG.maxTowers;
       const col = valid ? def.color : '#ff4757';
       const range = tstats({ type: g.buildType, lvl: 1 }).range;
       ctx.beginPath(); ctx.arc(aim.x, aim.y, range, 0, TAU);
@@ -1028,14 +1144,23 @@
       ctx.globalAlpha = 1;
     }
 
+    if (g.unlockMsg) {
+      const b = g.unlockMsg, p = b.t / b.life;
+      ctx.globalAlpha = Math.max(0, p < 0.1 ? p / 0.1 : p > 0.8 ? (1 - p) / 0.2 : 1);
+      ctx.fillStyle = TDEF[b.type].color;
+      ctx.font = '900 17px -apple-system, sans-serif';
+      ctx.fillText(b.txt, cx, bounds.top + 36);
+      ctx.globalAlpha = 1;
+    }
+
     if (g.state === 'break' && !g.over) {
       ctx.fillStyle = 'rgba(255,255,255,0.75)';
       ctx.font = '700 13px -apple-system, sans-serif';
-      ctx.fillText('Nächste Welle in ' + Math.ceil(g.breakT) + ' s', cx, cy + CORE_R + 60);
+      ctx.fillText('Nächste Welle in ' + Math.ceil(g.breakT) + ' s', cx, cy + CORE_R + 44);
       if (g.wave === 0) {
         ctx.fillStyle = 'rgba(0,240,255,0.9)';
-        ctx.fillText('Tippen = Turm bauen · Ziehen = Zielen', cx, cy + CORE_R + 82);
-        ctx.fillText('Turm antippen = Upgrade / Verkauf', cx, cy + CORE_R + 100);
+        ctx.fillText('Tippen = Turm bauen · Ziehen = Zielen', cx, cy + CORE_R + 66);
+        ctx.fillText('Turm antippen = Upgrade / Verkauf', cx, cy + CORE_R + 84);
       }
     }
     ctx.restore();
@@ -1049,7 +1174,7 @@
     e: $('eVal'), w: $('wVal'), best: $('bestVal'), h: $('hVal'), hf: $('hFill'),
     speed: $('speedBtn'), mute: $('muteBtn'), shock: $('shockBtn'),
     panel: $('panel'), pTitle: $('pTitle'), up: $('upBtn'), sell: $('sellBtn'),
-    eBox: $('eBox'), tc: $('tCount')
+    eBox: $('eBox'), tc: $('tCount'), hint: $('hint')
   };
   const tbtns = Array.from(document.querySelectorAll('.tbtn'));
   const tcEls = {};
@@ -1085,11 +1210,14 @@
     tbtns.forEach(b => {
       const type = b.dataset.type;
       ui.cls('act' + type, b, 'active', g.buildType === type && !g.selected);
-      const c = towerCost(type);
-      ui.set('tc' + type, tcEls[type], c);
-      ui.cls('poor' + type, b, 'poor', g.energy < c || towers.length >= CONFIG.maxTowers);
+      const c = towerCost(type), lk = !unlocked(type);
+      ui.cls('lock' + type, b, 'locked', lk);
+      ui.set('tc' + type, tcEls[type], lk ? '🔒 W' + TDEF[type].unlock : c);
+      ui.cls('poor' + type, b, 'poor', !lk && (g.energy < c || towers.length >= CONFIG.maxTowers));
     });
 
+    const bt = TDEF[g.buildType];
+    ui.set('hint', el.hint, g.selected ? '' : bt.icon + ' ' + bt.name + ' – ' + bt.desc);
     const t = g.selected;
     ui.cls('panel', el.panel, 'show', !!t);
     if (t) {
@@ -1118,6 +1246,7 @@
     if (g.selected) { g.selected = null; return; }
     const def = TDEF[g.buildType];
     const cost = towerCost(g.buildType);
+    if (!unlocked(g.buildType)) { floatText(x, y - 16, 'Gesperrt bis Welle ' + def.unlock, '#ff4757'); sfx.error(); return; }
     if (towers.length >= CONFIG.maxTowers) {
       floatText(x, y - 16, 'Turm-Limit erreicht', '#ff4757');
       sfx.error();
@@ -1163,7 +1292,9 @@
 
   tbtns.forEach(b => b.addEventListener('click', () => {
     audio();
-    g.buildType = b.dataset.type;
+    const ty = b.dataset.type;
+    if (!unlocked(ty)) { floatText(cx, cy + 70, 'Freigeschaltet ab Welle ' + TDEF[ty].unlock, '#ff4757'); sfx.error(); return; }
+    g.buildType = ty;
     g.selected = null;
   }));
   el.shock.addEventListener('click', () => { audio(); shock(); });
@@ -1237,6 +1368,8 @@
 
   window.addEventListener('resize', resize);
   window.addEventListener('orientationchange', () => setTimeout(resize, 150));
+
+  window.__CD = { get g() { return g; }, towers, tap: onTap, step, canPlace, towerCost, get bounds() { return bounds; }, el, CONFIG, get enemies() { return enemies; }, newGame };
 
   // Init
   resize();
