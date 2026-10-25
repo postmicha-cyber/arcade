@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Cyber Core">
+  <meta name="theme-color" content="#02040a">
+  <title>Cyber Core</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: none;
+    }
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      overscroll-behavior: none;
+    }
+    body {
+      position: fixed;
+      inset: 0;
+      height: 100dvh;
+      background: radial-gradient(circle at center, #0a1128 0%, #02040a 100%);
+      color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    #stage {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    /* HUD */
+    .hud {
+      position: absolute;
+      top: calc(16px + env(safe-area-inset-top));
+      left: calc(16px + env(safe-area-inset-left));
+      right: calc(16px + env(safe-area-inset-right));
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      pointer-events: none;
+      z-index: 10;
+    }
+    .hud-box {
+      background: rgba(6, 14, 30, 0.88);
+      border: 1px solid #00f0ff;
+      box-shadow: 0 0 14px rgba(0, 240, 255, 0.35);
+      padding: 8px 14px;
+      border-radius: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      -webkit-backdrop-filter: blur(8px);
+      backdrop-filter: blur(8px);
+      min-width: 0;
+    }
+    .hud-box.right { text-align: right; }
+    .hud-label {
+      font-size: 10px;
+      letter-spacing: 1.5px;
+      color: #00f0ff;
+      font-weight: 800;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+    .hud-val {
+      font-size: 18px;
+      font-weight: 900;
+      text-shadow: 0 0 8px rgba(0, 240, 255, 0.6);
+      font-variant-numeric: tabular-nums;
+    }
+    .level-bar {
+      height: 3px;
+      margin-top: 4px;
+      border-radius: 2px;
+      background: rgba(0, 240, 255, 0.2);
+      overflow: hidden;
+    }
+    .level-fill {
+      height: 100%;
+      width: 0%;
+      background: #00f0ff;
+      box-shadow: 0 0 8px #00f0ff;
+      transition: width 0.2s ease-out;
+    }
+
+    /* Toolbar */
+    .toolbar {
+      position: absolute;
+      bottom: calc(20px + env(safe-area-inset-bottom));
+      left: calc(16px + env(safe-area-inset-left));
+      right: calc(16px + env(safe-area-inset-right));
+      display: flex;
+      gap: 10px;
+      z-index: 10;
+    }
+    .btn {
+      flex: 1;
+      padding: 14px 10px;
+      border-radius: 14px;
+      border: 1px solid #00f0ff;
+      background: rgba(8, 16, 32, 0.9);
+      color: #00f0ff;
+      font-size: 14px;
+      font-weight: 800;
+      font-family: inherit;
+      cursor: pointer;
+      text-align: center;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+      -webkit-backdrop-filter: blur(8px);
+      backdrop-filter: blur(8px);
+    }
+    .btn:active {
+      transform: scale(0.96);
+      background: rgba(0, 240, 255, 0.25);
+    }
+    .btn-small { flex: 0 0 54px; padding-left: 0; padding-right: 0; }
+    .btn-reset { border-color: #ff4757; color: #ff4757; }
+    .btn-reset.armed { background: rgba(255, 71, 87, 0.3); font-size: 11px; }
+    .btn-mute.off { opacity: 0.5; }
+  </style>
+</head>
+<body>
+
+  <canvas id="stage"></canvas>
+
+  <div class="hud">
+    <div class="hud-box">
+      <span class="hud-label">Gespeicherte Energie</span>
+      <span class="hud-val" id="scoreDisplay">0 EP</span>
+    </div>
+    <div class="hud-box right">
+      <span class="hud-label">Labor Level</span>
+      <span class="hud-val" id="levelDisplay">LVL 1</span>
+      <div class="level-bar"><div class="level-fill" id="levelFill"></div></div>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <button class="btn btn-small btn-mute" id="muteBtn" aria-label="Ton an/aus">🔊</button>
+    <button class="btn" id="waveBtn">💥 Schockwelle</button>
+    <button class="btn" id="spawnBtn">⚡ +4 Bälle</button>
+    <button class="btn btn-small btn-reset" id="resetBtn" aria-label="Fortschritt löschen">🗑️</button>
+  </div>
+
+  <script>
+  (() => {
+    'use strict';
+
+    // ---------- 1. Speicher (localStorage mit Fallback) ----------
+    const STORAGE_KEY = 'cyberCore.v2';
+    const store = {
+      mem: null,
+      load() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (raw) return JSON.parse(raw);
+        } catch (e) {}
+        return this.mem;
+      },
+      save(data) {
+        this.mem = data;
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch (e) {}
+      }
+    };
+
+    const state = Object.assign({ energy: 0, level: 1, muted: false }, store.load() || {});
+
+    // Level-Kurve: Gesamtenergie, die für das NÄCHSTE Level nötig ist
+    const needFor = (lvl) => 50 * lvl * lvl;      // L1→2: 50, L2→3: 200, L3→4: 450 ...
+    const startOf = (lvl) => lvl <= 1 ? 0 : needFor(lvl - 1);
+
+    const $score = document.getElementById('scoreDisplay');
+    const $level = document.getElementById('levelDisplay');
+    const $fill  = document.getElementById('levelFill');
+    const $mute  = document.getElementById('muteBtn');
+
+    function updateHud() {
+      $score.textContent = state.energy + ' EP';
+      $level.textContent = 'LVL ' + state.level;
+      const span = needFor(state.level) - startOf(state.level);
+      const pct = Math.max(0, Math.min(1, (state.energy - startOf(state.level)) / span));
+      $fill.style.width = (pct * 100) + '%';
+      $mute.textContent = state.muted ? '🔇' : '🔊';
+      $mute.classList.toggle('off', state.muted);
+    }
+
+    let saveTimer = null;
+    function scheduleSave() {
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(() => store.save(state), 300);   // nicht bei jedem Tap schreiben
+    }
+    window.addEventListener('pagehide', () => store.save(state));
+
+    function addEnergy(amount) {
+      state.energy += amount;
+      let leveled = false;
+      while (state.energy >= needFor(state.level)) { state.level++; leveled = true; }
+      if (leveled) playTone('levelup');
+      updateHud();
+      scheduleSave();
+    }
+
+    // ---------- 2. Audio ----------
+    let audioCtx = null;
+    function getAudio() {
+      if (!audioCtx) {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return null;
+        audioCtx = new AC();
+      }
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      return audioCtx;
+    }
+
+    let lastTap = 0;
+    function playTone(type) {
+      if (state.muted) return;
+      const ctx = getAudio();
+      if (!ctx) return;
+      const now = ctx.currentTime;
+      try {
+        if (type === 'tap') {
+          if (performance.now() - lastTap < 40) return;      // Drosselung bei Dauer-Tippen
+          lastTap = performance.now();
+          const o = ctx.createOscillator(), g = ctx.createGain();
+          o.type = 'sine';
+          o.frequency.setValueAtTime(520, now);
+          o.frequency.exponentialRampToValueAtTime(120, now + 0.1);
+          g.gain.setValueAtTime(0.2, now);
+          g.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+          o.connect(g); g.connect(ctx.destination);
+          o.start(now); o.stop(now + 0.11);
+        } else if (type === 'hit') {
+          const o = ctx.createOscillator(), g = ctx.createGain();
+          o.type = 'sawtooth';
+          o.frequency.setValueAtTime(150, now);
+          o.frequency.exponentialRampToValueAtTime(30, now + 0.3);
+          g.gain.setValueAtTime(0.3, now);
+          g.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+          o.connect(g); g.connect(ctx.destination);
+          o.start(now); o.stop(now + 0.31);
+        } else if (type === 'levelup') {
+          [523, 659, 783, 1046].forEach((f, i) => {
+            const o = ctx.createOscillator(), g = ctx.createGain();
+            const t = now + i * 0.08;
+            o.frequency.value = f;
+            g.gain.setValueAtTime(0.2, t);
+            g.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+            o.connect(g); g.connect(ctx.destination);
+            o.start(t); o.stop(t + 0.21);
+          });
+        }
+      } catch (e) { console.warn('Audio-Fehler:', e); }
+    }
+
+    // ---------- 3. Canvas & Größe ----------
+    const canvas = document.getElementById('stage');
+    const ctx = canvas.getContext('2d');
+    let W = 0, H = 0, DPR = 1;
+
+    const BOUNDS = { left: 10, right: 10, top: 70, bottom: 100 };
+    const R = 11;                       // Orb-Radius
+
+    function resize() {
+      DPR = Math.min(window.devicePixelRatio || 1, 2);   // 2x reicht, spart Akku
+      W = window.innerWidth;
+      H = window.innerHeight;
+      canvas.width  = Math.round(W * DPR);
+      canvas.height = Math.round(H * DPR);
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      orbs.forEach(clampOrb);           // Orbs nach Rotation zurückholen
+    }
+
+    function clampOrb(o) {
+      o.x = Math.max(BOUNDS.left + R, Math.min(W - BOUNDS.right - R, o.x));
+      o.y = Math.max(BOUNDS.top + R,  Math.min(H - BOUNDS.bottom - R, o.y));
+    }
+
+    // ---------- 4. Orb-Sprites (einmal vorgerendert, statt Glow pro Frame) ----------
+    const COLORS = ['#00f0ff', '#ff007f', '#ffd32a'];
+    const SPRITE = 64;
+    const sprites = COLORS.map((c) => {
+      const s = document.createElement('canvas');
+      s.width = s.height = SPRITE;
+      const g = s.getContext('2d');
+      const grad = g.createRadialGradient(SPRITE / 2, SPRITE / 2, 0, SPRITE / 2, SPRITE / 2, SPRITE / 2);
+      grad.addColorStop(0.00, '#ffffff');
+      grad.addColorStop(0.18, c);
+      grad.addColorStop(0.32, c);
+      grad.addColorStop(0.55, c + '55');
+      grad.addColorStop(1.00, c + '00');
+      g.fillStyle = grad;
+      g.fillRect(0, 0, SPRITE, SPRITE);
+      return s;
+    });
+    const SPRITE_DRAW = 56;             // Anzeigegröße inkl. Leuchten
+
+    // ---------- 5. Objekte ----------
+    const MAX_ORBS = 25;
+    const orbs = [];
+    const waves = [];
+
+    function makeOrb(x, y) {
+      const o = {
+        x: x !== undefined ? x : Math.random() * (W - 60) + 30,
+        y: y !== undefined ? y : BOUNDS.top + R + Math.random() * (H - BOUNDS.top - BOUNDS.bottom - 2 * R),
+        vx: (Math.random() - 0.5) * 5,
+        vy: (Math.random() - 0.5) * 5,
+        c: Math.floor(Math.random() * COLORS.length)
+      };
+      clampOrb(o);
+      return o;
+    }
+
+    function spawnOrbs() {
+      playTone('tap');
+      addEnergy(5);
+      for (let i = 0; i < 4 && orbs.length < MAX_ORBS; i++) orbs.push(makeOrb(W / 2, H / 2));
+    }
+
+    function shockwave(x = W / 2, y = H / 2) {
+      playTone('hit');
+      addEnergy(15);
+      waves.push({ x, y, t: 0 });
+      for (const o of orbs) {
+        const dx = o.x - x, dy = o.y - y;
+        const d = Math.hypot(dx, dy);
+        if (d < 260 && d > 0) {
+          const f = (260 - d) / 10;
+          o.vx += (dx / d) * f;
+          o.vy += (dy / d) * f;
+        }
+      }
+    }
+
+    // ---------- 6. Eingabe (ein aktiver Finger, per pointerId) ----------
+    let activePointer = null;
+    let touchX = 0, touchY = 0;
+
+    canvas.addEventListener('pointerdown', (e) => {
+      if (activePointer !== null) return;
+      activePointer = e.pointerId;
+      touchX = e.clientX; touchY = e.clientY;
+      try { canvas.setPointerCapture(e.pointerId); } catch (_) {}
+      playTone('tap');
+      addEnergy(2);
+    });
+    canvas.addEventListener('pointermove', (e) => {
+      if (e.pointerId !== activePointer) return;
+      touchX = e.clientX; touchY = e.clientY;
+    });
+    const release = (e) => { if (e.pointerId === activePointer) activePointer = null; };
+    canvas.addEventListener('pointerup', release);
+    canvas.addEventListener('pointercancel', release);
+
+    // Buttons
+    document.getElementById('waveBtn').addEventListener('click', () => shockwave());
+    document.getElementById('spawnBtn').addEventListener('click', spawnOrbs);
+    $mute.addEventListener('click', () => {
+      state.muted = !state.muted;
+      updateHud();
+      scheduleSave();
+      if (!state.muted) playTone('tap');
+    });
+
+    // Reset mit Bestätigung (zweimal tippen innerhalb von 2,5 s)
+    const $reset = document.getElementById('resetBtn');
+    let resetArmed = false, resetTimer = null;
+    $reset.addEventListener('click', () => {
+      if (!resetArmed) {
+        resetArmed = true;
+        $reset.classList.add('armed');
+        $reset.textContent = 'Sicher?';
+        resetTimer = setTimeout(disarmReset, 2500);
+        return;
+      }
+      disarmReset();
+      state.energy = 0;
+      state.level = 1;
+      updateHud();
+      store.save(state);
+      playTone('hit');
+    });
+    function disarmReset() {
+      resetArmed = false;
+      clearTimeout(resetTimer);
+      $reset.classList.remove('armed');
+      $reset.textContent = '🗑️';
+    }
+
+    // ---------- 7. Update & Render (zeitbasiert, 60/120 Hz identisch) ----------
+    const LINK_DIST = 95;
+
+    function update(dt) {              // dt in "60-FPS-Frames"
+      const damp = Math.pow(0.985, dt);
+      const pulling = activePointer !== null;
+
+      for (const o of orbs) {
+        if (pulling) {
+          const dx = touchX - o.x, dy = touchY - o.y;
+          const d = Math.hypot(dx, dy);
+          if (d > 15) {
+            o.vx += (dx / d) * 0.5 * dt;
+            o.vy += (dy / d) * 0.5 * dt;
+          }
+        }
+        o.x += o.vx * dt;
+        o.y += o.vy * dt;
+        o.vx *= damp;
+        o.vy *= damp;
+
+        const minX = BOUNDS.left + R, maxX = W - BOUNDS.right - R;
+        const minY = BOUNDS.top + R,  maxY = H - BOUNDS.bottom - R;
+        if (o.x < minX) { o.x = minX; o.vx *= -0.8; }
+        if (o.x > maxX) { o.x = maxX; o.vx *= -0.8; }
+        if (o.y < minY) { o.y = minY; o.vy *= -0.8; }
+        if (o.y > maxY) { o.y = maxY; o.vy *= -0.8; }
+      }
+
+      for (let i = waves.length - 1; i >= 0; i--) {
+        waves[i].t += dt / 30;         // 0.5 s bei 60 FPS
+        if (waves[i].t >= 1) waves.splice(i, 1);
+      }
+    }
+
+    function render() {
+      ctx.clearRect(0, 0, W, H);
+
+      // Verbindungslinien
+      ctx.lineWidth = 1.2;
+      ctx.strokeStyle = '#00f0ff';
+      for (let i = 0; i < orbs.length; i++) {
+        for (let j = i + 1; j < orbs.length; j++) {
+          const dx = orbs[i].x - orbs[j].x;
+          const dy = orbs[i].y - orbs[j].y;
+          const d2 = dx * dx + dy * dy;
+          if (d2 < LINK_DIST * LINK_DIST) {
+            ctx.globalAlpha = (1 - Math.sqrt(d2) / LINK_DIST) * 0.85;
+            ctx.beginPath();
+            ctx.moveTo(orbs[i].x, orbs[i].y);
+            ctx.lineTo(orbs[j].x, orbs[j].y);
+            ctx.stroke();
+          }
+        }
+      }
+
+      // Schockwellen
+      ctx.lineWidth = 3;
+      for (const w of waves) {
+        const e = 1 - Math.pow(1 - w.t, 2);          // ease-out
+        ctx.globalAlpha = 1 - w.t;
+        ctx.beginPath();
+        ctx.arc(w.x, w.y, 5 + e * 195, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      // Orbs
+      ctx.globalAlpha = 1;
+      const half = SPRITE_DRAW / 2;
+      for (const o of orbs) {
+        ctx.drawImage(sprites[o.c], o.x - half, o.y - half, SPRITE_DRAW, SPRITE_DRAW);
+      }
+    }
+
+    // ---------- 8. Loop mit Pause im Hintergrund ----------
+    let last = 0, rafId = 0, running = false;
+
+    function frame(ts) {
+      if (!running) return;
+      const dt = Math.min((ts - last) / 16.667, 3);    // gedeckelt gegen Sprünge
+      last = ts;
+      update(dt);
+      render();
+      rafId = requestAnimationFrame(frame);
+    }
+    function start() {
+      if (running) return;
+      running = true;
+      last = performance.now();
+      rafId = requestAnimationFrame(frame);
+    }
+    function stop() {
+      running = false;
+      cancelAnimationFrame(rafId);
+    }
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) { stop(); store.save(state); } else { start(); }
+    });
+
+    // ---------- Init ----------
+    window.addEventListener('resize', resize);
+    window.addEventListener('orientationchange', () => setTimeout(resize, 150));
+    resize();
+    for (let i = 0; i < 14; i++) orbs.push(makeOrb());
+    updateHud();
+    start();
+  })();
+  </script>
+</body>
+</html>
