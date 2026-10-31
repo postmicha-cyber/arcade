@@ -25,7 +25,11 @@
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(40vw, 260px), 1fr)); gap: 14px; }
   .tile { position: relative; background: var(--card); border-radius: 24px; overflow: hidden; box-shadow: 0 3px 0 var(--line), 0 6px 18px rgba(60,50,20,.08); text-align: left; transition: transform .12s; touch-action: manipulation; }
   .tile:active { transform: scale(.97); }
-  .tile img { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; background: #ddd; pointer-events: none; }
+  .pic { display: flex; align-items: flex-end; justify-content: center; width: 100%; aspect-ratio: 4 / 3; background: #e9e4d6 var(--sc) center / cover no-repeat; overflow: hidden; pointer-events: none; }
+  .pic img { display: block; max-width: 90%; max-height: 86%; margin-bottom: 5%; object-fit: contain; filter: drop-shadow(0 6px 5px rgba(40,30,10,.35)); }
+  .pic.left { justify-content: flex-start; } .pic.left img { max-width: 96%; }
+  .pic.photo img { max-width: none; max-height: none; width: 100%; height: 100%; margin: 0; object-fit: cover; filter: none; }
+  .tile .vc { display: block; margin: -8px 14px 10px; font-size: 13px; color: var(--mut); font-weight: 600; }
   .tile .nm { display: block; padding: 10px 14px 12px; font-size: 22px; font-weight: 800; }
   .tile .miss { position: absolute; top: 10px; left: 10px; background: rgba(255,255,255,.92); border-radius: 14px; padding: 3px 10px; font-size: 13px; font-weight: 700; color: var(--mut); }
   .tile .own { position: absolute; top: 10px; left: 10px; background: var(--acc2); color: #fff; border-radius: 14px; padding: 3px 10px; font-size: 13px; font-weight: 800; }
@@ -60,7 +64,9 @@
   .btn.red { background: #fde9e6; color: var(--bad); border: 2px solid var(--bad); }
   .btn.rec { background: var(--bad); }
   .btn:disabled { opacity: .45; }
-  .prev { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 16px; background: #eee; margin-bottom: 6px; }
+  .prev { border-radius: 16px; margin-bottom: 6px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; } .chips button { padding: 8px 12px; border-radius: 14px; border: 2px solid var(--line); background: #f4f1e8; font-weight: 700; font-size: 14px; } .chips button.on { background: var(--acc); border-color: var(--acc); color: #fff; }
+  .credits li { margin: 0 0 10px 18px; font-size: 14px; } .credits a { color: var(--acc); }
   .src { font-size: 13px; color: var(--mut); }
   .meter { height: 10px; border-radius: 5px; background: #eee; overflow: hidden; margin: 6px 0; } .meter i { display: block; height: 100%; width: 0; background: var(--bad); transition: width .1s linear; }
   #toast { position: fixed; left: 50%; bottom: 100px; transform: translateX(-50%); background: var(--txt); color: #fff; padding: 12px 18px; border-radius: 16px; font-weight: 700; display: none; z-index: 40; max-width: 92vw; text-align: center; }
@@ -75,6 +81,7 @@
 <body>
 <header>
   <h1>🦁 Tierstimmen</h1>
+  <button class="hb" id="infoBtn" title="Quellen" aria-label="Quellen">ℹ️</button>
   <button class="hb" id="speakBtn" title="Namen vorsprechen" aria-pressed="false">🗣</button>
   <button class="hb lock" id="lockBtn" title="Eltern: gedrückt halten">🔒<i id="lockBar"></i></button>
 </header>
@@ -95,14 +102,26 @@
 <script>
 'use strict';
 // Die Figuren aus dem Foto. snd: Datei im Ordner tierstimmen/sounds (echte Aufnahme), src: Quelle/Lizenz.
+// Szenen als SVG (400 x 300), werden als Kachel-Hintergrund genutzt
+const SCENES = {
+  urzeit: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffcf8a"/><stop offset=".6" stop-color="#ffe9c2"/><stop offset="1" stop-color="#f4e1b5"/></linearGradient></defs><rect width="400" height="300" fill="url(#s)"/><circle cx="320" cy="70" r="28" fill="#fff3d6"/><path d="M40 200 L120 70 L150 80 L230 200Z" fill="#b78a6b"/><path d="M118 74 L152 82 L142 104 L126 98Z" fill="#e2603c"/><path d="M135 60 q-10 -20 5 -30 q-5 -15 15 -18 q12 -10 22 5 q15 0 10 15" fill="none" stroke="#c9b8a6" stroke-width="10" stroke-linecap="round" opacity=".7"/><path d="M200 200 L270 110 L300 120 L360 200Z" fill="#c9a07f"/><rect y="200" width="400" height="100" fill="#9fbf6a"/><path d="M0 215 q100 -18 200 0 t200 0 V300 H0Z" fill="#88ad55"/><g fill="#5f8a3a"><path d="M20 210 q15 -45 40 -60 q-20 30 -18 60Z"/><path d="M30 210 q-10 -40 -30 -50 q22 15 25 50Z"/><path d="M372 212 q-12 -50 -40 -66 q22 32 22 66Z"/><path d="M362 212 q12 -40 36 -48 q-24 18 -26 48Z"/></g><g fill="#6e5a3a"><rect x="345" y="120" width="8" height="95" rx="3"/></g><g fill="#5a8a35"><path d="M349 122 q-40 -10 -55 10 q30 -6 55 -6Z"/><path d="M349 122 q40 -10 55 10 q-30 -6 -55 -6Z"/><path d="M349 120 q-25 -30 -50 -25 q30 8 50 28Z"/><path d="M349 120 q25 -30 50 -25 q-30 8 -50 28Z"/></g></svg>`,
+  dschungel: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c9ecd0"/><stop offset="1" stop-color="#eef8e6"/></linearGradient></defs><rect width="400" height="300" fill="url(#s)"/><g fill="#7fbf7f" opacity=".7"><ellipse cx="60" cy="120" rx="80" ry="60"/><ellipse cx="200" cy="100" rx="90" ry="55"/><ellipse cx="350" cy="120" rx="80" ry="65"/></g><g fill="#4f9a5a"><path d="M0 0 q60 40 40 120 q-20 -60 -40 -70Z"/><path d="M400 0 q-70 30 -50 130 q15 -70 50 -80Z"/><path d="M90 0 q10 50 -30 90 q40 -20 60 -90Z"/><path d="M310 0 q-5 60 35 95 q-45 -15 -60 -95Z"/></g><rect y="215" width="400" height="85" fill="#9cc77a"/><path d="M0 225 q100 -15 200 0 t200 0 V300 H0Z" fill="#86b866"/><g fill="#3f8a4a"><path d="M10 230 q10 -40 35 -55 q-15 30 -12 55Z"/><path d="M25 232 q-5 -35 -25 -45 q20 12 20 45Z"/><path d="M380 232 q-10 -45 -35 -58 q18 30 15 58Z"/><path d="M370 232 q8 -35 28 -42 q-18 14 -20 42Z"/></g></svg>`,
+  savanne: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd27a"/><stop offset=".7" stop-color="#ffeec4"/></linearGradient></defs><rect width="400" height="300" fill="url(#s)"/><circle cx="90" cy="95" r="40" fill="#ffb347" opacity=".85"/><path d="M0 190 q120 -25 220 -5 t180 -10 V300 H0Z" fill="#e8c27a"/><rect y="215" width="400" height="85" fill="#d9ad5c"/><path d="M0 222 q100 -12 200 0 t200 0 V300 H0Z" fill="#cf9f4c"/><g fill="#6b5232"><rect x="318" y="120" width="7" height="85" rx="3" transform="rotate(6 321 160)"/></g><path d="M260 128 q60 -30 130 0 q-65 -12 -130 0Z" fill="#7a8a3a"/><path d="M270 120 q55 -22 110 2 q-55 -8 -110 -2Z" fill="#8c9c45"/><g stroke="#b88a3a" stroke-width="3" stroke-linecap="round"><path d="M30 240 l-4 -16 M36 240 l2 -18 M42 240 l6 -14"/><path d="M360 248 l-4 -16 M366 248 l2 -18 M372 248 l6 -14"/></g></svg>`,
+  wald: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2b3d6b"/><stop offset=".7" stop-color="#5a6fa0"/><stop offset="1" stop-color="#8fa0c4"/></linearGradient></defs><rect width="400" height="300" fill="url(#s)"/><circle cx="300" cy="70" r="34" fill="#fdf3c8"/><circle cx="312" cy="62" r="34" fill="#4a5d8f" opacity=".0"/><g fill="#fff" opacity=".8"><circle cx="60" cy="40" r="1.6"/><circle cx="120" cy="70" r="1.2"/><circle cx="200" cy="30" r="1.5"/><circle cx="240" cy="90" r="1"/><circle cx="360" cy="140" r="1.3"/><circle cx="30" cy="110" r="1"/></g><g fill="#2f4a5a"><path d="M20 230 l30 -110 l30 110Z"/><path d="M70 230 l25 -90 l25 90Z"/><path d="M300 230 l30 -120 l30 120Z"/><path d="M350 230 l25 -85 l25 85Z"/></g><rect y="215" width="400" height="85" fill="#cfd8e8"/><path d="M0 225 q100 -14 200 0 t200 0 V300 H0Z" fill="#e6ecf6"/></svg>`,
+  wiese: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9fd6ff"/><stop offset="1" stop-color="#e3f4ff"/></linearGradient></defs><rect width="400" height="300" fill="url(#s)"/><circle cx="330" cy="60" r="30" fill="#ffe27a"/><g fill="#fff" opacity=".9"><ellipse cx="90" cy="70" rx="40" ry="16"/><ellipse cx="120" cy="60" rx="30" ry="18"/><ellipse cx="230" cy="95" rx="34" ry="12"/></g><path d="M0 200 q100 -30 200 -10 t200 -5 V300 H0Z" fill="#a8d878"/><rect y="215" width="400" height="85" fill="#8cc860"/><g fill="#fff"><circle cx="40" cy="250" r="3"/><circle cx="90" cy="270" r="3"/><circle cx="330" cy="260" r="3"/><circle cx="370" cy="280" r="3"/></g><g fill="#ffd34d"><circle cx="40" cy="250" r="1.2"/><circle cx="90" cy="270" r="1.2"/><circle cx="330" cy="260" r="1.2"/><circle cx="370" cy="280" r="1.2"/></g></svg>`
+};
+const SCENE_NAMES = { urzeit: '🌋 Urzeit', dschungel: '🌿 Dschungel', savanne: '🌅 Savanne', wald: '🌲 Wald', wiese: '🌼 Wiese', '': '🖼 Foto wie aufgenommen' };
+const sceneUrl = k => SCENES[k] ? 'url("data:image/svg+xml;charset=utf-8,' + encodeURIComponent(SCENES[k]) + '")' : 'none';
 const BUILTIN = [
-  { id: 'trex', art: 'der', n: 'T-Rex', img: 'tierstimmen/trex.jpg', snd: null, src: '', fact: 'Wie ein T-Rex klang, weiß niemand genau. Forscher vermuten ein tiefes Brummen mit geschlossenem Maul – ähnlich wie Krokodile und Strauße.' },
-  { id: 'brachio', art: 'der', n: 'Brachiosaurus', img: 'tierstimmen/brachio.jpg', snd: null, src: '', fact: 'Der Langhals war so hoch wie ein Haus mit vier Stockwerken. Vermutlich brummte er sehr tief, wie ein Elefant.' },
-  { id: 'triceratops', art: 'der', n: 'Triceratops', img: 'tierstimmen/triceratops.jpg', snd: null, src: '', fact: 'Drei Hörner und ein großer Nackenschild. Er fraß nur Pflanzen.' },
-  { id: 'wolf', art: 'der', n: 'Wolf', img: 'tierstimmen/wolf.jpg', snd: null, src: '', fact: 'Wölfe heulen, um ihr Rudel zu rufen. Man hört das kilometerweit.' },
-  { id: 'tiger', art: 'der', n: 'Tiger', img: 'tierstimmen/tiger.jpg', snd: null, src: '', fact: 'Der Tiger ist die größte Katze der Welt. Jeder Tiger hat ein eigenes Streifenmuster.' },
-  { id: 'loewin', art: 'die', n: 'Löwin', img: 'tierstimmen/loewin.jpg', snd: null, src: '', fact: 'Löwinnen jagen gemeinsam im Rudel. Ein Löwengebrüll hört man bis zu 8 km weit.' }
+  { id: 'trex', art: 'der', n: 'T-Rex', img: 'tierstimmen/bild/trex.webp', scene: 'urzeit', snd: 'tierstimmen/sounds/trex.mp3', voice: 'Alligator', fact: 'Wie ein T-Rex klang, weiß niemand genau. Forscher vermuten ein tiefes Brüllen mit geschlossenem Maul – ähnlich wie bei Krokodilen. Darum brüllt hier ein echter Alligator.' },
+  { id: 'brachio', art: 'der', n: 'Brachiosaurus', img: 'tierstimmen/bild/brachio.webp', edge: 'left', scene: 'urzeit', snd: 'tierstimmen/sounds/brachio.mp3', voice: 'Elefant', fact: 'Der Langhals war so hoch wie ein Haus mit vier Stockwerken. Seine Stimme kennt niemand – hier trompetet ein echter Elefant, das größte Landtier von heute.' },
+  { id: 'triceratops', art: 'der', n: 'Triceratops', img: 'tierstimmen/bild/triceratops.webp', scene: 'urzeit', snd: 'tierstimmen/sounds/triceratops.mp3', voice: 'Bison', fact: 'Drei Hörner und ein großer Nackenschild, er fraß nur Pflanzen. Hier brummt ein echter Bison – auch ein großer Pflanzenfresser mit Hörnern.' },
+  { id: 'wolf', art: 'der', n: 'Wolf', img: 'tierstimmen/bild/wolf.webp', scene: 'wald', snd: 'tierstimmen/sounds/wolf.mp3', fact: 'Wölfe heulen, um ihr Rudel zu rufen. Man hört das kilometerweit.' },
+  { id: 'tiger', art: 'der', n: 'Tiger', img: 'tierstimmen/bild/tiger.webp', scene: 'dschungel', snd: 'tierstimmen/sounds/tiger.mp3', fact: 'Der Tiger ist die größte Katze der Welt. Jeder Tiger hat ein eigenes Streifenmuster.' },
+  { id: 'loewin', art: 'die', n: 'Löwin', img: 'tierstimmen/bild/loewin.webp', scene: 'savanne', snd: 'tierstimmen/sounds/loewin.mp3', fact: 'Löwinnen jagen gemeinsam im Rudel. Ein Löwengebrüll hört man bis zu 8 km weit.' }
 ];
+// Quellen der Aufnahmen und Bilder (freie Lizenzen, Wikimedia Commons)
+const CREDITS = {"trex": [{"what": "Stimme", "title": "Alligatorbellowedit.ogg", "author": "Borisblue", "lic": "Public domain", "licurl": "", "page": "https://commons.wikimedia.org/wiki/File:Alligatorbellowedit.ogg"}], "brachio": [{"what": "Stimme", "title": "Elephant voice - trumpeting.ogg", "author": "தகவலுழவன்", "lic": "CC0", "licurl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en", "page": "https://commons.wikimedia.org/wiki/File:Elephant_voice_-_trumpeting.ogg"}], "triceratops": [{"what": "Stimme", "title": "Bison.ogg", "author": "National Park Service", "lic": "Public domain", "licurl": "", "page": "https://commons.wikimedia.org/wiki/File:Bison.ogg"}], "wolf": [{"what": "Stimme", "title": "Wolf howls.ogg", "author": "unbekannt", "lic": "Public domain", "licurl": "", "page": "https://commons.wikimedia.org/wiki/File:Wolf_howls.ogg"}], "tiger": [{"what": "Stimme", "title": "439280 schots angry-tiger.wav", "author": "schots", "lic": "CC0", "licurl": "http://creativecommons.org/publicdomain/zero/1.0/deed.en", "page": "https://commons.wikimedia.org/wiki/File:439280_schots_angry-tiger.wav"}], "loewin": [{"what": "Stimme", "title": "Lion raring-sound1TamilNadu178.ogg", "author": "த*உழவன்", "lic": "Public domain", "licurl": "", "page": "https://commons.wikimedia.org/wiki/File:Lion_raring-sound1TamilNadu178.ogg"}]};
 const $ = id => document.getElementById(id);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
@@ -119,9 +138,12 @@ const urls = new Map();
 const blobUrl = (key, blob) => { if (!blob) return ''; const old = urls.get(key); if (old && old.b === blob) return old.u; if (old) URL.revokeObjectURL(old.u); const u = URL.createObjectURL(blob); urls.set(key, { b: blob, u }); return u; };
 const save = () => DB.set('state', state);
 
+// Bild einer Figur: freigestellt auf Szene oder als Foto
+const picHTML = f => '<span class="pic' + (f.cut ? '' : ' photo') + (f.edge ? ' ' + f.edge : '') + '" style="--sc:' + esc(f.cut ? sceneUrl(f.scene) : 'none') + '"><img src="' + esc(f.img) + '" alt=""></span>';
 function figures() {
   return BUILTIN.filter(f => !state.hidden.includes(f.id)).map(f => Object.assign({ builtin: true }, f))
-    .concat(state.figs.map(f => ({ id: f.id, n: f.n, img: blobUrl('img:' + f.id, f.img), snd: null, src: '', fact: '', builtin: false })));
+    .map(f => Object.assign(f, { cut: true }))
+    .concat(state.figs.map(f => ({ id: f.id, n: f.n, img: blobUrl('img:' + f.id, f.img), cut: !!f.cut, scene: f.scene || '', snd: null, fact: '', builtin: false })));
 }
 const soundOf = f => state.snd[f.id] ? { url: blobUrl('snd:' + f.id, state.snd[f.id]), own: true } : f.snd ? { url: f.snd, own: false } : null;
 
@@ -152,7 +174,7 @@ function render() {
   const F = figures();
   $('grid').innerHTML = F.map(f => {
     const s = soundOf(f);
-    return '<button class="tile" data-id="' + f.id + '" aria-label="' + esc(f.n) + '"><img src="' + esc(f.img) + '" alt=""><span class="nm">' + esc(f.n) + '</span>' +
+    return '<button class="tile" data-id="' + f.id + '" aria-label="' + esc(f.n) + '">' + picHTML(f) + '<span class="nm">' + esc(f.n) + '</span>' + (f.voice && !(s && s.own) ? '<span class="vc">Stimme: ' + esc(f.voice) + '</span>' : '') +
       (s && s.own ? '<span class="own" title="Eigene Aufnahme">🎙</span>' : !s ? '<span class="miss" title="Noch kein Geräusch">🔇</span>' : '') +
       '<span class="gear" data-g="' + f.id + '" role="button" aria-label="Einstellen">⚙️</span></button>';
   }).join('') + '<button class="add" id="addBtn">＋ Neue Figur</button>';
@@ -225,23 +247,34 @@ function burst(el) {
 
 // ---------- Figur einstellen: aufnehmen, Datei wählen, Foto, Name ----------
 function figSheet(f) {
-  const isNew = !f, w = { id: f ? f.id : 'f' + Date.now().toString(36), n: f ? f.n : '', img: null, snd: f ? state.snd[f.id] || null : null };
-  if (f && !f.builtin) w.img = (state.figs.find(x => x.id === f.id) || {}).img || null;
+  const isNew = !f, w = { id: f ? f.id : 'f' + Date.now().toString(36), n: f ? f.n : '', img: null, raw: null, cut: false, scene: 'wiese', snd: f ? state.snd[f.id] || null : null };
+  if (f && !f.builtin) { const o = state.figs.find(x => x.id === f.id) || {}; Object.assign(w, { img: o.img || null, cut: !!o.cut, scene: o.scene || 'wiese' }); }
   let rec = null;
   const imgSrc = () => w.img ? blobUrl('tmpimg', w.img) : f ? f.img : '';
   const draw = () => {
     const s = w.snd ? 'eigene Aufnahme' : f && f.snd ? 'echte Aufnahme' : 'noch keins';
     $('sheet').innerHTML = '<h2><span>' + (isNew ? '＋ Neue Figur' : '⚙️ ' + esc(f.n)) + '</span><button class="btn sec" id="sX">Schließen</button></h2>' +
-      (imgSrc() ? '<img class="prev" src="' + esc(imgSrc()) + '" alt="">' : '<div class="prev" style="display:grid;place-items:center;font-size:44px">📷</div>') +
-      (f && f.builtin ? '' : '<div class="row"><button class="btn sec" id="sImg">📷 Foto aufnehmen / wählen</button></div><label for="sN">Name</label><input type="text" id="sN" value="' + esc(w.n) + '" placeholder="z. B. Elefant">') +
+      (imgSrc() ? '<div class="prev">' + picHTML(f && f.builtin ? f : { img: imgSrc(), cut: w.cut, scene: w.scene }) + '</div>' : '<div class="prev pic" style="display:grid;place-items:center;font-size:44px">📷</div>') +
+      (f && f.builtin ? '' : '<div class="row"><button class="btn sec" id="sImg">📷 Foto aufnehmen / wählen</button>' + (w.raw ? '<button class="btn sec" id="sCut">' + (w.cut ? '↺ Ganzes Foto' : '✂️ Freistellen') + '</button>' : '') + '</div>' +
+        '<p class="help">Tipp: Figur vor ein weißes Blatt Papier stellen und von der Seite fotografieren. Dann wird der Hintergrund automatisch entfernt.</p>' +
+        (w.cut ? '<label>Hintergrund</label><div class="chips" id="sSc">' + Object.entries(SCENE_NAMES).filter(([k]) => k).map(([k, n]) => '<button data-sc="' + k + '" class="' + (w.scene === k ? 'on' : '') + '">' + n + '</button>').join('') + '</div>' : '') +
+        '<label for="sN">Name</label><input type="text" id="sN" value="' + esc(w.n) + '" placeholder="z. B. Elefant">') +
       (f && f.fact ? '<p style="margin-top:8px">💡 ' + esc(f.fact) + '</p>' : '') +
       '<label>Geräusch: <span class="pill">' + s + '</span></label>' +
       '<div class="row"><button class="btn ' + (rec ? 'rec' : '') + '" id="sRec">' + (rec ? '⏹ Stopp' : '🎙 Aufnehmen') + '</button><button class="btn sec" id="sFile">📁 Datei wählen</button><button class="btn sec" id="sPlay"' + (w.snd || (f && f.snd) ? '' : ' disabled') + '>▶ Anhören</button>' + (w.snd && f && f.snd ? '<button class="btn sec" id="sOrig">↺ Original</button>' : '') + '</div>' +
       '<div class="meter"><i id="sMeter"></i></div><p class="help">Aufnahme: bis zu 10 Sekunden, nah ans Mikrofon. Oder eine Tonaufnahme vom Gerät wählen (z. B. von einer Tierstimmen-Seite heruntergeladen).</p>' +
-      (f && f.src ? '<p class="src">Quelle: ' + esc(f.src) + '</p>' : '') +
+      (f && CREDITS[f.id] ? '<p class="src">Quellen: ' + CREDITS[f.id].map(c => esc(c.what + ': ' + c.author + ', ' + c.lic)).join(' · ') + ' (Details unter ℹ️)</p>' : '') +
       '<div class="row" style="margin-top:14px">' + (isNew ? '<button class="btn" id="sOk">Figur anlegen</button>' : '<button class="btn" id="sOk">Speichern</button>') + (!isNew ? '<button class="btn red" id="sDel">' + (f.builtin ? '🙈 Ausblenden' : '🗑 Löschen') + '</button>' : '') + '</div>';
     $('sX').onclick = close;
-    $('fileImg').onchange = async e => { const file = e.target.files[0]; e.target.value = ''; if (file) { if ($('sN')) w.n = $('sN').value; w.img = await shrink(file); draw(); } };
+    $('fileImg').onchange = async e => {
+      const file = e.target.files[0]; e.target.value = ''; if (!file) return;
+      if ($('sN')) w.n = $('sN').value;
+      w.raw = await shrink(file); const c = await cutout(w.raw);
+      if (c) { w.img = c; w.cut = true; toast('✂️ Hintergrund entfernt'); } else { w.img = w.raw; w.cut = false; toast('Hintergrund nicht eindeutig – Foto bleibt ganz'); }
+      draw();
+    };
+    if ($('sCut')) $('sCut').onclick = async () => { if (w.cut) { w.img = w.raw; w.cut = false; } else { const c = await cutout(w.raw, true); if (c) { w.img = c; w.cut = true; } else toast('Freistellen hat hier nicht geklappt'); } if ($('sN')) w.n = $('sN').value; draw(); };
+    if ($('sSc')) $('sSc').querySelectorAll('button').forEach(b => b.onclick = () => { w.scene = b.dataset.sc; if ($('sN')) w.n = $('sN').value; draw(); });
     if ($('sImg')) $('sImg').onclick = () => $('fileImg').click();
     if ($('sN')) $('sN').oninput = e => { w.n = e.target.value; };
     $('sRec').onclick = () => rec ? rec.stop() : record();
@@ -251,8 +284,8 @@ function figSheet(f) {
     if ($('sOrig')) $('sOrig').onclick = () => { w.snd = null; draw(); };
     $('sOk').onclick = async () => {
       if (!f || !f.builtin) { w.n = ($('sN').value || '').trim(); if (!w.n) return $('sN').focus(); if (!w.img) return toast('Bitte ein Foto der Figur aufnehmen'); }
-      if (isNew) state.figs.push({ id: w.id, n: w.n, img: w.img });
-      else if (!f.builtin) Object.assign(state.figs.find(x => x.id === f.id), { n: w.n, img: w.img });
+      if (isNew) state.figs.push({ id: w.id, n: w.n, img: w.img, cut: w.cut, scene: w.scene });
+      else if (!f.builtin) Object.assign(state.figs.find(x => x.id === f.id), { n: w.n, img: w.img, cut: w.cut, scene: w.scene });
       if (w.snd) state.snd[w.id] = w.snd; else delete state.snd[w.id];
       await save(); close(); render(); toast(isNew ? '✓ ' + w.n + ' ist dabei' : '✓ Gespeichert');
     };
@@ -280,15 +313,52 @@ $('ov').onclick = e => { if (e.target === $('ov')) { stopSound(); $('ov').classL
 function shrink(file) {
   return new Promise(res => {
     const img = new Image(); img.onload = () => {
-      const W = 480, H = 360, c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d');
+      const W = 640, H = 480, c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d');
       const r = Math.max(W / img.width, H / img.height), w = img.width * r, h = img.height * r; g.drawImage(img, (W - w) / 2, (H - h) / 2, w, h);
       URL.revokeObjectURL(img.src); c.toBlob(b => res(b || file), 'image/jpeg', .82);
     }; img.onerror = () => res(file); img.src = URL.createObjectURL(file);
   });
 }
+// Freistellen: Hintergrund, der vom Rand her gleichmäßig hell ist (z. B. weißes Papier), wird durchsichtig.
+// Gibt null zurück, wenn kein eindeutiger Hintergrund gefunden wird.
+function cutout(blob, loose) {
+  return new Promise(res => {
+    const img = new Image(); img.onload = () => {
+      const W = img.width, H = img.height, c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d');
+      g.drawImage(img, 0, 0); URL.revokeObjectURL(img.src);
+      const d = g.getImageData(0, 0, W, H), p = d.data, N = W * H;
+      // Hintergrundfarbe = Mittel der Randpixel
+      let br = 0, bg = 0, bb = 0, n = 0;
+      for (let x = 0; x < W; x++) for (const y of [0, H - 1]) { const i = (y * W + x) * 4; br += p[i]; bg += p[i + 1]; bb += p[i + 2]; n++; }
+      for (let y = 0; y < H; y++) for (const x of [0, W - 1]) { const i = (y * W + x) * 4; br += p[i]; bg += p[i + 1]; bb += p[i + 2]; n++; }
+      br /= n; bg /= n; bb /= n;
+      const tol = loose ? 70 : 48, dist = i => Math.abs(p[i] - br) + Math.abs(p[i + 1] - bg) + Math.abs(p[i + 2] - bb);
+      // Flutfüllung vom Rand: nur zusammenhängender Hintergrund wird entfernt, helle Stellen im Tier bleiben
+      const bgm = new Uint8Array(N), st = [];
+      for (let x = 0; x < W; x++) { st.push(x, (H - 1) * W + x); } for (let y = 0; y < H; y++) { st.push(y * W, y * W + W - 1); }
+      while (st.length) { const q = st.pop(); if (bgm[q]) continue; if (dist(q * 4) > tol) continue; bgm[q] = 1; const x = q % W, y = (q / W) | 0; if (x > 0) st.push(q - 1); if (x < W - 1) st.push(q + 1); if (y > 0) st.push(q - W); if (y < H - 1) st.push(q + W); }
+      let cnt = 0, x0 = W, y0 = H, x1 = 0, y1 = 0;
+      for (let q = 0; q < N; q++) { if (bgm[q]) cnt++; else { const x = q % W, y = (q / W) | 0; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; } }
+      const frac = cnt / N; if (frac < .25 || frac > .97) return res(null);
+      // weiche Kante: Pixel neben Hintergrund halb durchsichtig
+      for (let q = 0; q < N; q++) { const i = q * 4; if (bgm[q]) p[i + 3] = 0; else { const x = q % W, y = (q / W) | 0; const nb = (x > 0 && bgm[q - 1]) + (x < W - 1 && bgm[q + 1]) + (y > 0 && bgm[q - W]) + (y < H - 1 && bgm[q + W]); if (nb) p[i + 3] = 255 - nb * 45; } }
+      g.putImageData(d, 0, 0);
+      const pad = 6, cw = Math.min(W, x1 - x0 + 1 + pad * 2), ch = Math.min(H, y1 - y0 + 1 + pad * 2), o = document.createElement('canvas'); o.width = cw; o.height = ch;
+      o.getContext('2d').drawImage(c, Math.max(0, x0 - pad), Math.max(0, y0 - pad), cw, ch, 0, 0, cw, ch);
+      o.toBlob(b => res(b), 'image/png');
+    }; img.onerror = () => res(null); img.src = URL.createObjectURL(blob);
+  });
+}
+// Quellen anzeigen (Lizenzen verlangen die Nennung)
+function creditsSheet() {
+  $('sheet').innerHTML = '<h2><span>ℹ️ Quellen</span><button class="btn sec" id="cX">Schließen</button></h2><p>Alle Tierstimmen sind echte Aufnahmen unter freien Lizenzen (Wikimedia Commons), gekürzt und in der Lautstärke angeglichen. Die Bilder zeigen die eigenen Figuren aus dem Kinderzimmer, freigestellt. Hintergründe und App: selbst gezeichnet.</p><ul class="credits">' +
+    BUILTIN.map(f => (CREDITS[f.id] || []).map(c => '<li><b>' + esc(f.n) + ' – ' + esc(c.what) + ':</b> ' + esc(c.title) + ' von ' + esc(c.author) + ', ' + (c.licurl ? '<a href="' + esc(c.licurl) + '" target="_blank" rel="noopener">' + esc(c.lic) + '</a>' : esc(c.lic)) + ' · <a href="' + esc(c.page) + '" target="_blank" rel="noopener">Quelle</a></li>').join('')).join('') + '</ul>';
+  $('cX').onclick = () => $('ov').classList.remove('on'); $('ov').classList.add('on');
+}
 let toastT;
 function toast(t) { $('toast').textContent = t; $('toast').classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => $('toast').classList.remove('on'), 2600); }
 
+$('infoBtn').onclick = creditsSheet;
 $('quizBtn').onclick = startQuiz; $('stopBtn').onclick = stopQuiz; $('againBtn').onclick = () => quiz && play(quiz.target, { noName: true });
 $('speakBtn').onclick = () => { state.speak = !state.speak; save(); render(); if (state.speak) say('Namen an'); };
 if ('speechSynthesis' in window) speechSynthesis.getVoices();
@@ -296,7 +366,7 @@ if ('speechSynthesis' in window) speechSynthesis.getVoices();
 (async () => {
   await DB.open();
   const s = await DB.get('state');
-  if (s && typeof s === 'object') state = Object.assign(state, { figs: Array.isArray(s.figs) ? s.figs.filter(f => f && f.id && f.n) : [], snd: s.snd && typeof s.snd === 'object' ? s.snd : {}, hidden: Array.isArray(s.hidden) ? s.hidden : [], speak: !!s.speak });
+  if (s && typeof s === 'object') state = Object.assign(state, { figs: Array.isArray(s.figs) ? s.figs.filter(f => f && f.id && f.n).map(f => Object.assign({ cut: false, scene: '' }, f)) : [], snd: s.snd && typeof s.snd === 'object' ? s.snd : {}, hidden: Array.isArray(s.hidden) ? s.hidden : [], speak: !!s.speak });
   render();
   window.Tierstimmen = { state: () => state, figures, ready: true };
 })();
