@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Tierstimmen">
+<meta name="theme-color" content="#2f6f4f">
+<title>Tierstimmen</title>
+<style>
+  :root { --bg: #f3efe4; --card: #ffffff; --txt: #2b2a26; --mut: #6f6a5c; --acc: #2f6f4f; --acc2: #f2a93b; --ok: #3aa66a; --bad: #e0614f; --line: #e4dccb; }
+  [hidden] { display: none !important; }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; overflow-x: hidden; }
+  body { background: var(--bg); color: var(--txt); font: 17px/1.4 "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, sans-serif; user-select: none; -webkit-user-select: none; }
+  button, input { font: inherit; color: inherit; }
+  button { cursor: pointer; border: 0; background: none; }
+  header { display: flex; align-items: center; gap: 10px; padding: 12px 16px; position: sticky; top: 0; z-index: 10; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+  header h1 { font-size: 22px; font-weight: 800; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .hb { min-width: 48px; height: 48px; padding: 0 14px; border-radius: 24px; background: var(--card); border: 2px solid var(--line); font-weight: 800; font-size: 16px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap; }
+  .hb.on { background: var(--acc); color: #fff; border-color: var(--acc); }
+  .hb.lock { position: relative; overflow: hidden; }
+  .hb.lock i { position: absolute; left: 0; bottom: 0; height: 4px; width: 0; background: var(--acc2); }
+  main { padding: 6px 16px 120px; max-width: 1200px; margin: 0 auto; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(40vw, 260px), 1fr)); gap: 14px; }
+  .tile { position: relative; background: var(--card); border-radius: 24px; overflow: hidden; box-shadow: 0 3px 0 var(--line), 0 6px 18px rgba(60,50,20,.08); text-align: left; transition: transform .12s; touch-action: manipulation; }
+  .tile:active { transform: scale(.97); }
+  .tile img { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; background: #ddd; pointer-events: none; }
+  .tile .nm { display: block; padding: 10px 14px 12px; font-size: 22px; font-weight: 800; }
+  .tile .miss { position: absolute; top: 10px; left: 10px; background: rgba(255,255,255,.92); border-radius: 14px; padding: 3px 10px; font-size: 13px; font-weight: 700; color: var(--mut); }
+  .tile .own { position: absolute; top: 10px; left: 10px; background: var(--acc2); color: #fff; border-radius: 14px; padding: 3px 10px; font-size: 13px; font-weight: 800; }
+  .tile .gear { position: absolute; top: 8px; right: 8px; width: 46px; height: 46px; border-radius: 50%; background: #fff; font-size: 22px; box-shadow: 0 2px 8px rgba(0,0,0,.2); display: none; }
+  body.quiz .tile .own, body.quiz .tile .miss { display: none; }
+  body.parent .tile .gear { display: grid; place-items: center; }
+  .tile.play { animation: hop .7s ease; } .tile.play::after { content: ""; position: absolute; inset: 0; border: 6px solid var(--acc2); border-radius: 24px; pointer-events: none; }
+  .tile.ok { animation: hop .7s ease; } .tile.ok::after { content: ""; position: absolute; inset: 0; border: 6px solid var(--ok); border-radius: 24px; }
+  .tile.bad { animation: shake .45s ease; }
+  .tile.dim { display: none; }
+  @keyframes hop { 0% { transform: translateY(0) } 25% { transform: translateY(-14px) rotate(-2deg) } 50% { transform: translateY(0) } 70% { transform: translateY(-6px) rotate(1.5deg) } 100% { transform: none } }
+  @keyframes shake { 0%, 100% { transform: none } 20% { transform: translateX(-10px) } 40% { transform: translateX(10px) } 60% { transform: translateX(-6px) } 80% { transform: translateX(6px) } }
+  .add { display: none; border: 3px dashed var(--line); border-radius: 24px; min-height: 180px; font-size: 20px; font-weight: 800; color: var(--mut); background: transparent; }
+  body.parent .add { display: grid; place-items: center; }
+  .bar { position: fixed; left: 0; right: 0; bottom: 0; padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); display: flex; gap: 10px; justify-content: center; background: linear-gradient(transparent, var(--bg) 40%); z-index: 9; }
+  .big { height: 64px; padding: 0 26px; border-radius: 32px; font-size: 20px; font-weight: 800; background: var(--acc); color: #fff; box-shadow: 0 4px 0 #1f4d36; display: inline-flex; align-items: center; gap: 10px; }
+  .big.sec { background: var(--card); color: var(--txt); box-shadow: 0 4px 0 var(--line); border: 2px solid var(--line); }
+  .big:active { transform: translateY(3px); box-shadow: none; }
+  .quiz { text-align: center; padding: 6px 0 14px; }
+  .quiz b { display: block; font-size: 26px; } .quiz span { color: var(--mut); }
+  .stars { font-size: 26px; letter-spacing: 2px; min-height: 34px; }
+  .ov { position: fixed; inset: 0; background: rgba(30,28,20,.5); display: none; align-items: flex-end; justify-content: center; z-index: 30; }
+  .ov.on { display: flex; }
+  .sheet { background: var(--card); width: 100%; max-width: 560px; border-radius: 24px 24px 0 0; padding: 20px 18px calc(20px + env(safe-area-inset-bottom)); max-height: 92vh; overflow-y: auto; user-select: text; -webkit-user-select: text; }
+  .sheet h2 { font-size: 22px; margin-bottom: 12px; display: flex; align-items: center; gap: 10px; } .sheet h2 span { flex: 1; }
+  .sheet p, .help { color: var(--mut); font-size: 15px; margin-bottom: 12px; }
+  .sheet label { display: block; font-size: 14px; font-weight: 700; color: var(--mut); margin: 10px 0 4px; }
+  .sheet input[type=text] { width: 100%; padding: 12px; border: 2px solid var(--line); border-radius: 12px; background: #fff; font-size: 18px; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
+  .btn { padding: 12px 16px; border-radius: 14px; font-weight: 800; background: var(--acc); color: #fff; }
+  .btn.sec { background: #f4f1e8; color: var(--txt); border: 2px solid var(--line); }
+  .btn.red { background: #fde9e6; color: var(--bad); border: 2px solid var(--bad); }
+  .btn.rec { background: var(--bad); }
+  .btn:disabled { opacity: .45; }
+  .prev { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 16px; background: #eee; margin-bottom: 6px; }
+  .src { font-size: 13px; color: var(--mut); }
+  .meter { height: 10px; border-radius: 5px; background: #eee; overflow: hidden; margin: 6px 0; } .meter i { display: block; height: 100%; width: 0; background: var(--bad); transition: width .1s linear; }
+  #toast { position: fixed; left: 50%; bottom: 100px; transform: translateX(-50%); background: var(--txt); color: #fff; padding: 12px 18px; border-radius: 16px; font-weight: 700; display: none; z-index: 40; max-width: 92vw; text-align: center; }
+  #toast.on { display: block; }
+  .burst { position: fixed; pointer-events: none; font-size: 34px; z-index: 35; animation: fly 1s ease-out forwards; }
+  @keyframes fly { to { transform: translate(var(--dx), var(--dy)) scale(.6); opacity: 0; } }
+  .pill { display: inline-block; background: #f4f1e8; border: 2px solid var(--line); border-radius: 14px; padding: 2px 10px; font-size: 13px; font-weight: 700; }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+  @media (max-width: 420px) { header h1 { font-size: 19px; } .hb { padding: 0 11px; } .big { padding: 0 18px; font-size: 18px; } .tile .nm { font-size: 19px; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>🦁 Tierstimmen</h1>
+  <button class="hb" id="speakBtn" title="Namen vorsprechen" aria-pressed="false">🗣</button>
+  <button class="hb lock" id="lockBtn" title="Eltern: gedrückt halten">🔒<i id="lockBar"></i></button>
+</header>
+<main>
+  <div class="quiz" id="quiz" hidden><b id="qT">Wer macht dieses Geräusch?</b><div class="stars" id="stars"></div><span id="qS">Tippe auf das richtige Tier</span></div>
+  <div class="grid" id="grid"></div>
+  <p class="help" id="parentHelp" style="display:none;margin-top:18px">Eltern-Modus: ⚙️ an einer Figur nimmt ein Geräusch auf oder wählt eine Datei. „＋ Neue Figur“ fotografiert eine weitere Figur. Alles bleibt nur auf diesem Gerät. Zum Beenden 🔓 antippen.</p>
+</main>
+<div class="bar" id="bar">
+  <button class="big" id="quizBtn">🎲 Ratespiel</button>
+  <button class="big sec" id="stopBtn" hidden>✕ Fertig</button>
+  <button class="big sec" id="againBtn" hidden>🔊 Nochmal</button>
+</div>
+<div class="ov" id="ov"><div class="sheet" id="sheet" role="dialog" aria-modal="true"></div></div>
+<div id="toast" role="status"></div>
+<input type="file" id="fileSnd" accept="audio/*" hidden>
+<input type="file" id="fileImg" accept="image/*" capture="environment" hidden>
+<script>
+'use strict';
+// Die Figuren aus dem Foto. snd: Datei im Ordner tierstimmen/sounds (echte Aufnahme), src: Quelle/Lizenz.
+const BUILTIN = [
+  { id: 'trex', art: 'der', n: 'T-Rex', img: 'tierstimmen/trex.jpg', snd: null, src: '', fact: 'Wie ein T-Rex klang, weiß niemand genau. Forscher vermuten ein tiefes Brummen mit geschlossenem Maul – ähnlich wie Krokodile und Strauße.' },
+  { id: 'brachio', art: 'der', n: 'Brachiosaurus', img: 'tierstimmen/brachio.jpg', snd: null, src: '', fact: 'Der Langhals war so hoch wie ein Haus mit vier Stockwerken. Vermutlich brummte er sehr tief, wie ein Elefant.' },
+  { id: 'triceratops', art: 'der', n: 'Triceratops', img: 'tierstimmen/triceratops.jpg', snd: null, src: '', fact: 'Drei Hörner und ein großer Nackenschild. Er fraß nur Pflanzen.' },
+  { id: 'wolf', art: 'der', n: 'Wolf', img: 'tierstimmen/wolf.jpg', snd: null, src: '', fact: 'Wölfe heulen, um ihr Rudel zu rufen. Man hört das kilometerweit.' },
+  { id: 'tiger', art: 'der', n: 'Tiger', img: 'tierstimmen/tiger.jpg', snd: null, src: '', fact: 'Der Tiger ist die größte Katze der Welt. Jeder Tiger hat ein eigenes Streifenmuster.' },
+  { id: 'loewin', art: 'die', n: 'Löwin', img: 'tierstimmen/loewin.jpg', snd: null, src: '', fact: 'Löwinnen jagen gemeinsam im Rudel. Ein Löwengebrüll hört man bis zu 8 km weit.' }
+];
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+// ---------- Speicher: nur lokal (IndexedDB), Aufnahmen und Fotos als Blobs ----------
+const DB = (() => {
+  let db = null;
+  const open = () => new Promise(res => { try { const r = indexedDB.open('tierstimmen', 1); r.onupgradeneeded = () => r.result.createObjectStore('kv'); r.onsuccess = () => { db = r.result; res(true); }; r.onerror = () => res(false); } catch (e) { res(false); } });
+  const tx = (mode, fn) => new Promise(res => { if (!db) return res(null); try { const t = db.transaction('kv', mode), st = t.objectStore('kv'), r = fn(st); t.oncomplete = () => res(r && 'result' in r ? r.result : true); t.onerror = () => res(null); } catch (e) { res(null); } });
+  return { open, get: k => tx('readonly', s => s.get(k)), set: (k, v) => tx('readwrite', s => s.put(v, k)), del: k => tx('readwrite', s => s.delete(k)) };
+})();
+// state.figs: eigene Figuren [{id, n, img(Blob)}]; state.snd[id]: eigene Aufnahme (Blob); state.hidden: ausgeblendete Original-Figuren
+let state = { figs: [], snd: {}, hidden: [], speak: false };
+const urls = new Map();
+const blobUrl = (key, blob) => { if (!blob) return ''; const old = urls.get(key); if (old && old.b === blob) return old.u; if (old) URL.revokeObjectURL(old.u); const u = URL.createObjectURL(blob); urls.set(key, { b: blob, u }); return u; };
+const save = () => DB.set('state', state);
+
+function figures() {
+  return BUILTIN.filter(f => !state.hidden.includes(f.id)).map(f => Object.assign({ builtin: true }, f))
+    .concat(state.figs.map(f => ({ id: f.id, n: f.n, img: blobUrl('img:' + f.id, f.img), snd: null, src: '', fact: '', builtin: false })));
+}
+const soundOf = f => state.snd[f.id] ? { url: blobUrl('snd:' + f.id, state.snd[f.id]), own: true } : f.snd ? { url: f.snd, own: false } : null;
+
+// ---------- Abspielen ----------
+let cur = null;
+function stopSound() { if (cur) { try { cur.pause(); } catch (e) {} cur = null; } if ('speechSynthesis' in window) speechSynthesis.cancel(); }
+function say(text) {
+  return new Promise(res => {
+    if (!('speechSynthesis' in window)) return res();
+    const u = new SpeechSynthesisUtterance(text); u.lang = 'de-DE'; u.rate = .9; u.pitch = 1.1;
+    const v = speechSynthesis.getVoices().find(x => /^de/i.test(x.lang)); if (v) u.voice = v;
+    let done = false; const fin = () => { if (!done) { done = true; res(); } };
+    u.onend = fin; u.onerror = fin; setTimeout(fin, 2500); speechSynthesis.speak(u);
+  });
+}
+async function play(f, opts) {
+  stopSound();
+  const s = soundOf(f);
+  if (state.speak && !(opts && opts.noName)) await say(f.n);
+  if (!s) { if (!state.speak) say(f.n); return false; }
+  const a = new Audio(s.url); a.volume = 1; cur = a;
+  try { await a.play(); return true; } catch (e) { toast('Ton konnte nicht abgespielt werden'); return false; }
+}
+
+// ---------- Oberfläche ----------
+let quiz = null, parent = false;
+function render() {
+  const F = figures();
+  $('grid').innerHTML = F.map(f => {
+    const s = soundOf(f);
+    return '<button class="tile" data-id="' + f.id + '" aria-label="' + esc(f.n) + '"><img src="' + esc(f.img) + '" alt=""><span class="nm">' + esc(f.n) + '</span>' +
+      (s && s.own ? '<span class="own" title="Eigene Aufnahme">🎙</span>' : !s ? '<span class="miss" title="Noch kein Geräusch">🔇</span>' : '') +
+      '<span class="gear" data-g="' + f.id + '" role="button" aria-label="Einstellen">⚙️</span></button>';
+  }).join('') + '<button class="add" id="addBtn">＋ Neue Figur</button>';
+  $('grid').querySelectorAll('.tile').forEach(el => el.onclick = e => {
+    const f = F.find(x => x.id === el.dataset.id);
+    if (e.target.closest('[data-g]')) return figSheet(f);
+    if (quiz) return answer(f, el);
+    tap(f, el);
+  });
+  $('addBtn').onclick = () => figSheet(null);
+  document.body.classList.toggle('parent', parent);
+  $('parentHelp').style.display = parent ? '' : 'none';
+  $('lockBtn').firstChild.textContent = parent ? '🔓' : '🔒';
+  $('speakBtn').classList.toggle('on', state.speak); $('speakBtn').setAttribute('aria-pressed', state.speak);
+}
+async function tap(f, el) {
+  el.classList.remove('play'); void el.offsetWidth; el.classList.add('play');
+  setTimeout(() => el.classList.remove('play'), 800);
+  const ok = await play(f);
+  if (!ok && !soundOf(f)) toast(parent ? 'Noch kein Geräusch: ⚙️ antippen und aufnehmen' : '🙈 ' + f.n + ' hat noch kein Geräusch');
+}
+
+// ---------- Ratespiel ----------
+function startQuiz() {
+  const F = figures().filter(soundOf);
+  if (F.length < 2) return toast('Für das Ratespiel brauchen mindestens zwei Tiere ein Geräusch');
+  quiz = { pool: F, target: null, score: 0, round: 0, locked: false }; document.body.classList.add('quiz');
+  $('quiz').hidden = false; $('quizBtn').hidden = true; $('stopBtn').hidden = false; $('againBtn').hidden = false;
+  next();
+}
+function next() {
+  const F = quiz.pool; let t; do { t = F[Math.floor(Math.random() * F.length)]; } while (F.length > 1 && quiz.target && t.id === quiz.target.id);
+  quiz.target = t; quiz.locked = false; quiz.round++;
+  $('qT').textContent = 'Wer macht dieses Geräusch?'; $('qS').textContent = 'Tippe auf das richtige Tier';
+  document.querySelectorAll('.tile').forEach(el => { el.classList.remove('ok', 'bad'); el.classList.toggle('dim', !F.some(x => x.id === el.dataset.id)); });
+  setTimeout(() => play(t, { noName: true }), 350);
+}
+async function answer(f, el) {
+  if (!quiz || quiz.locked) return;
+  if (!quiz.pool.some(x => x.id === f.id)) return;
+  if (f.id === quiz.target.id) {
+    quiz.locked = true; quiz.score++; el.classList.add('ok'); burst(el);
+    $('stars').textContent = '⭐'.repeat(Math.min(quiz.score, 10)) + (quiz.score > 10 ? ' +' + (quiz.score - 10) : '');
+    $('qT').textContent = 'Super! Das war ' + (f.art ? f.art + ' ' : '') + f.n + '!';
+    stopSound(); await say('Super! ' + f.n + '!');
+    setTimeout(() => { if (quiz) next(); }, 1300);
+  } else {
+    el.classList.remove('bad'); void el.offsetWidth; el.classList.add('bad');
+    $('qS').textContent = 'Fast! Hör nochmal genau hin …';
+    setTimeout(() => quiz && play(quiz.target, { noName: true }), 500);
+  }
+}
+function stopQuiz() {
+  quiz = null; document.body.classList.remove('quiz'); stopSound(); $('quiz').hidden = true; $('quizBtn').hidden = false; $('stopBtn').hidden = true; $('againBtn').hidden = true; $('stars').textContent = '';
+  document.querySelectorAll('.tile').forEach(el => el.classList.remove('ok', 'bad', 'dim'));
+}
+function burst(el) {
+  const r = el.getBoundingClientRect(), E = ['⭐', '🎉', '✨', '💚', '🌟'];
+  for (let i = 0; i < 12; i++) { const s = document.createElement('div'); s.className = 'burst'; s.textContent = E[i % E.length]; s.style.left = (r.left + r.width / 2) + 'px'; s.style.top = (r.top + r.height / 2) + 'px'; const a = Math.random() * Math.PI * 2, d = 90 + Math.random() * 120; s.style.setProperty('--dx', Math.cos(a) * d + 'px'); s.style.setProperty('--dy', Math.sin(a) * d + 'px'); document.body.appendChild(s); setTimeout(() => s.remove(), 1100); }
+}
+
+// ---------- Eltern-Modus: gedrückt halten, damit Kinder nicht aus Versehen etwas ändern ----------
+(() => {
+  let t = null, st = 0;
+  const bar = $('lockBar');
+  const down = e => { e.preventDefault(); if (parent) { parent = false; render(); return; } st = performance.now(); const step = () => { const p = Math.min(1, (performance.now() - st) / 1200); bar.style.width = p * 100 + '%'; if (p >= 1) { t = null; bar.style.width = 0; parent = true; stopQuiz(); render(); toast('🔓 Eltern-Modus'); return; } t = requestAnimationFrame(step); }; t = requestAnimationFrame(step); };
+  const up = () => { if (t) { cancelAnimationFrame(t); t = null; bar.style.width = 0; if (!parent) toast('🔒 Zum Einstellen gedrückt halten'); } };
+  $('lockBtn').addEventListener('pointerdown', down); ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => $('lockBtn').addEventListener(ev, up));
+})();
+
+// ---------- Figur einstellen: aufnehmen, Datei wählen, Foto, Name ----------
+function figSheet(f) {
+  const isNew = !f, w = { id: f ? f.id : 'f' + Date.now().toString(36), n: f ? f.n : '', img: null, snd: f ? state.snd[f.id] || null : null };
+  if (f && !f.builtin) w.img = (state.figs.find(x => x.id === f.id) || {}).img || null;
+  let rec = null;
+  const imgSrc = () => w.img ? blobUrl('tmpimg', w.img) : f ? f.img : '';
+  const draw = () => {
+    const s = w.snd ? 'eigene Aufnahme' : f && f.snd ? 'echte Aufnahme' : 'noch keins';
+    $('sheet').innerHTML = '<h2><span>' + (isNew ? '＋ Neue Figur' : '⚙️ ' + esc(f.n)) + '</span><button class="btn sec" id="sX">Schließen</button></h2>' +
+      (imgSrc() ? '<img class="prev" src="' + esc(imgSrc()) + '" alt="">' : '<div class="prev" style="display:grid;place-items:center;font-size:44px">📷</div>') +
+      (f && f.builtin ? '' : '<div class="row"><button class="btn sec" id="sImg">📷 Foto aufnehmen / wählen</button></div><label for="sN">Name</label><input type="text" id="sN" value="' + esc(w.n) + '" placeholder="z. B. Elefant">') +
+      (f && f.fact ? '<p style="margin-top:8px">💡 ' + esc(f.fact) + '</p>' : '') +
+      '<label>Geräusch: <span class="pill">' + s + '</span></label>' +
+      '<div class="row"><button class="btn ' + (rec ? 'rec' : '') + '" id="sRec">' + (rec ? '⏹ Stopp' : '🎙 Aufnehmen') + '</button><button class="btn sec" id="sFile">📁 Datei wählen</button><button class="btn sec" id="sPlay"' + (w.snd || (f && f.snd) ? '' : ' disabled') + '>▶ Anhören</button>' + (w.snd && f && f.snd ? '<button class="btn sec" id="sOrig">↺ Original</button>' : '') + '</div>' +
+      '<div class="meter"><i id="sMeter"></i></div><p class="help">Aufnahme: bis zu 10 Sekunden, nah ans Mikrofon. Oder eine Tonaufnahme vom Gerät wählen (z. B. von einer Tierstimmen-Seite heruntergeladen).</p>' +
+      (f && f.src ? '<p class="src">Quelle: ' + esc(f.src) + '</p>' : '') +
+      '<div class="row" style="margin-top:14px">' + (isNew ? '<button class="btn" id="sOk">Figur anlegen</button>' : '<button class="btn" id="sOk">Speichern</button>') + (!isNew ? '<button class="btn red" id="sDel">' + (f.builtin ? '🙈 Ausblenden' : '🗑 Löschen') + '</button>' : '') + '</div>';
+    $('sX').onclick = close;
+    $('fileImg').onchange = async e => { const file = e.target.files[0]; e.target.value = ''; if (file) { if ($('sN')) w.n = $('sN').value; w.img = await shrink(file); draw(); } };
+    if ($('sImg')) $('sImg').onclick = () => $('fileImg').click();
+    if ($('sN')) $('sN').oninput = e => { w.n = e.target.value; };
+    $('sRec').onclick = () => rec ? rec.stop() : record();
+    $('fileSnd').onchange = e => { const file = e.target.files[0]; e.target.value = ''; if (!file) return; if (file.size > 8e6) return toast('Datei zu groß (max. 8 MB)'); w.snd = file; if ($('sN')) w.n = $('sN').value; draw(); toast('Geräusch übernommen – noch speichern'); };
+    $('sFile').onclick = () => $('fileSnd').click();
+    $('sPlay').onclick = () => { stopSound(); const a = new Audio(w.snd ? blobUrl('tmpsnd', w.snd) : f.snd); cur = a; a.play().catch(() => toast('Ton konnte nicht abgespielt werden')); };
+    if ($('sOrig')) $('sOrig').onclick = () => { w.snd = null; draw(); };
+    $('sOk').onclick = async () => {
+      if (!f || !f.builtin) { w.n = ($('sN').value || '').trim(); if (!w.n) return $('sN').focus(); if (!w.img) return toast('Bitte ein Foto der Figur aufnehmen'); }
+      if (isNew) state.figs.push({ id: w.id, n: w.n, img: w.img });
+      else if (!f.builtin) Object.assign(state.figs.find(x => x.id === f.id), { n: w.n, img: w.img });
+      if (w.snd) state.snd[w.id] = w.snd; else delete state.snd[w.id];
+      await save(); close(); render(); toast(isNew ? '✓ ' + w.n + ' ist dabei' : '✓ Gespeichert');
+    };
+    if ($('sDel')) $('sDel').onclick = async () => {
+      if (f.builtin) state.hidden.push(f.id); else state.figs = state.figs.filter(x => x.id !== f.id);
+      delete state.snd[f.id]; await save(); close(); render();
+      toast(f.builtin ? '🙈 Ausgeblendet' : '🗑 Gelöscht');
+    };
+  };
+  // Aufnahme mit dem Mikrofon (bleibt auf dem Gerät)
+  async function record() {
+    if (!navigator.mediaDevices || !window.MediaRecorder) return toast('Aufnehmen wird von diesem Browser nicht unterstützt');
+    let stream; try { stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false } }); } catch (e) { return toast('Kein Zugriff aufs Mikrofon'); }
+    const chunks = [], mr = new MediaRecorder(stream); rec = mr; draw();
+    let t0 = Date.now(); const iv = setInterval(() => { const p = Math.min(100, (Date.now() - t0) / 100); if ($('sMeter')) $('sMeter').style.width = p + '%'; if (p >= 100 && mr.state === 'recording') mr.stop(); }, 100);
+    mr.ondataavailable = e => e.data.size && chunks.push(e.data);
+    mr.onstop = () => { clearInterval(iv); stream.getTracks().forEach(t => t.stop()); rec = null; if (chunks.length) w.snd = new Blob(chunks, { type: mr.mimeType || 'audio/webm' }); if ($('sN')) w.n = $('sN').value || w.n; draw(); };
+    mr.start();
+  }
+  const close = () => { if (rec) rec.stop(); stopSound(); $('ov').classList.remove('on'); };
+  draw(); $('ov').classList.add('on');
+}
+$('ov').onclick = e => { if (e.target === $('ov')) { stopSound(); $('ov').classList.remove('on'); } };
+// Fotos verkleinern (4:3, 480 px breit), damit der Speicher klein bleibt
+function shrink(file) {
+  return new Promise(res => {
+    const img = new Image(); img.onload = () => {
+      const W = 480, H = 360, c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d');
+      const r = Math.max(W / img.width, H / img.height), w = img.width * r, h = img.height * r; g.drawImage(img, (W - w) / 2, (H - h) / 2, w, h);
+      URL.revokeObjectURL(img.src); c.toBlob(b => res(b || file), 'image/jpeg', .82);
+    }; img.onerror = () => res(file); img.src = URL.createObjectURL(file);
+  });
+}
+let toastT;
+function toast(t) { $('toast').textContent = t; $('toast').classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => $('toast').classList.remove('on'), 2600); }
+
+$('quizBtn').onclick = startQuiz; $('stopBtn').onclick = stopQuiz; $('againBtn').onclick = () => quiz && play(quiz.target, { noName: true });
+$('speakBtn').onclick = () => { state.speak = !state.speak; save(); render(); if (state.speak) say('Namen an'); };
+if ('speechSynthesis' in window) speechSynthesis.getVoices();
+
+(async () => {
+  await DB.open();
+  const s = await DB.get('state');
+  if (s && typeof s === 'object') state = Object.assign(state, { figs: Array.isArray(s.figs) ? s.figs.filter(f => f && f.id && f.n) : [], snd: s.snd && typeof s.snd === 'object' ? s.snd : {}, hidden: Array.isArray(s.hidden) ? s.hidden : [], speak: !!s.speak });
+  render();
+  window.Tierstimmen = { state: () => state, figures, ready: true };
+})();
+</script>
+</body>
+</html>
